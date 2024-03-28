@@ -1,4 +1,4 @@
-package ByteBoard.plugins
+package byteboard.configuration
 
 import io.ktor.server.application.*
 import io.ktor.server.plugins.callloging.*

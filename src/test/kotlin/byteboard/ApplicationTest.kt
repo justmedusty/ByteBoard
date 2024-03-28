@@ -1,0 +1,7 @@
+package byteboard
+
+
+
+class ApplicationTest {
+
+}

@@ -8,11 +8,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
-group = "ByteBoard"
+group = "byteboard"
 version = "0.0.1"
 
 application {
-    mainClass.set("ByteBoard.ApplicationKt")
+    mainClass.set("byteboard.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
@@ -40,4 +40,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    implementation("org.mindrot:jbcrypt:0.4")
+    implementation("org.postgresql:postgresql:42.7.2")
+    implementation("io.github.microutils:kotlin-logging:3.0.5")
+
 }

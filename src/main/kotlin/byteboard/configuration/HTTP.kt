@@ -1,4 +1,4 @@
-package ByteBoard.plugins
+package byteboard.configuration
 
 import io.ktor.http.*
 import io.ktor.server.application.*
