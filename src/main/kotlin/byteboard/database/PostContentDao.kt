@@ -17,7 +17,6 @@ object PostContents: Table(name = "PostContents") {
     override val primaryKey = PrimaryKey(id)
 }
 
-
 data class PostContent(
     val postContent: String,
     val postId: Long

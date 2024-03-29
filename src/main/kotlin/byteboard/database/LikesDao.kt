@@ -10,7 +10,8 @@ object Likes: Table(name = "Likes") {
     private val id: Column<Long> = long("id").autoIncrement()
     val postId : Column<Long> = long("post").references(Posts.id, ReferenceOption.CASCADE)
     val likeCount: Column<Long> = long("likeCount")
-    val commenterId: Column<Long> = long("commenterId").references(Users.id)
+    val isCommentLike : Column<Boolean> = bool("isCommentLike").default(false)
+    val commentId: Column<Long?> = long("commentId").references(Users.id).nullable().default(null)
 
 
 
@@ -21,5 +22,7 @@ object Likes: Table(name = "Likes") {
 data class Comment(
     val content: String,
     val postId: Long,
-    val commenterId: Long
+    val commenterId: Long,
+    val isCommentLike: Boolean,
+    val commentId: Long?
 )
