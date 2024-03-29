@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.Table
 
 
 object PostContents: Table(name = "PostContents") {
-    private val id: Column<Long> = long("id").autoIncrement()
+    val id: Column<Long> = long("id").autoIncrement()
     val content: Column<String> = text("postContent")
     val postId : Column<Long> = long("post").references(Posts.id, onDelete = ReferenceOption.CASCADE)
 
