@@ -1,22 +1,29 @@
 package byteboard.database
+
 /**
  * Configure database
  *
  */
 
 import byteboard.security.hashPassword
+import mu.KotlinLogging
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
-import mu.KotlinLogging
+
 object Users : Table(name = "Users") {
-    val id: Column<Int> = integer("id").autoIncrement()
+    val id: Column<Long> = long("id").autoIncrement()
     val userName: Column<String> = varchar("user_name", 45).uniqueIndex()
     val passwordHash = text("password_hash")
+    val isAdmin = bool("is_admin").default(false)
+    val isModerator = bool("is_moderator").default(false)
+    val isSuspended = bool("is_suspended").default(false)
 
     override val primaryKey = PrimaryKey(id)
 }
+
 val logger = KotlinLogging.logger { }
 
 /**
@@ -31,6 +38,9 @@ data class User(
     val userName: String,
     val publicKey: String,
     val passwordHash: String,
+    val isAdmin : Boolean,
+    val isModerator : Boolean,
+    val isSuspended: Boolean
 )
 
 
@@ -129,7 +139,7 @@ fun createUser(user: User) {
  * @param userName
  * @return
  */
-fun getUserId(userName: String): Int {
+fun getUserId(userName: String): Long {
     return try {
         transaction {
             Users.select { Users.userName eq userName }.singleOrNull()?.get(Users.id)!!
@@ -147,7 +157,7 @@ fun getUserId(userName: String): Int {
  * @return
  */
 fun getUserName(id: String?): String? {
-    val userId = id?.toIntOrNull() // Convert the String ID to Int or adjust the conversion based on the actual ID type
+    val userId = id?.toLongOrNull() // Convert the String ID to Int or adjust the conversion based on the actual ID type
 
     return try {
         transaction {
@@ -199,7 +209,7 @@ fun updateUserCredentials(userName: String, password: Boolean, newValue: String)
  *
  * @param id
  */
-fun deleteUser(id: Int) {
+fun deleteUser(id: Long) {
     try {
         transaction {
             Users.deleteWhere { Users.id eq id }
@@ -233,5 +243,50 @@ fun searchAllUsers(query: String, page: Int, limit: Int): List<String> {
     } catch (e: Exception) {
         logger.error { "Error during search for users $e " }
         emptyList()
+    }
+}
+
+fun isUserSuspended(userId: Long): Boolean {
+    return try {
+        transaction {
+            userId.let { userId ->
+                Users.select { Users.id eq userId }.singleOrNull()?.get(Users.isSuspended) ?: false
+            }
+
+
+        }
+    } catch (e: ExposedSQLException) {
+        logger.error { e.message }
+        return false
+    }
+}
+
+fun isUserAdmin(userId: Long): Boolean {
+    return try {
+        transaction {
+            userId.let { userId ->
+                Users.select { Users.id eq userId }.singleOrNull()?.get(Users.isAdmin) ?: false
+            }
+
+
+        }
+    } catch (e: ExposedSQLException) {
+        logger.error { e.message }
+        return false
+    }
+}
+
+fun isUserModerator(userId: Long): Boolean {
+    return try {
+        transaction {
+            userId.let { userId ->
+                Users.select { Users.id eq userId }.singleOrNull()?.get(Users.isModerator) ?: false
+            }
+
+
+        }
+    } catch (e: ExposedSQLException) {
+        logger.error { e.message }
+        return false
     }
 }
