@@ -11,6 +11,9 @@ object Comments: Table(name = "Comments") {
     val content: Column<String> = text("postContent")
     val postId : Column<Long> = long("post").references(Posts.id,ReferenceOption.CASCADE)
     val commenterId: Column<Long> = long("commenterId").references(Users.id)
+    val isReply : Column<Boolean> = bool("isReply").default(false)
+    val parentCommentId : Column<Long?> = long("parentCommentId").references(Comments.id, onDelete = ReferenceOption.CASCADE).nullable().default(null)
+
 
 
 
