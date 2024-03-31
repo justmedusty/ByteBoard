@@ -1,12 +1,13 @@
-import byteboard.database.*
+package byteboard.database
+
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object PostLikes : Table(name = "Likes") {
-    private val id: Column<Long> = long("id").autoIncrement()
+    val id: Column<Long> = long("id").autoIncrement()
     val postId: Column<Long> = long("post").references(Posts.id, ReferenceOption.CASCADE)
-    val likedBy: Column<Long> = long("likedBy").references(Users.id)
+    val likedById: Column<Long> = long("likedById").references(Users.id)
 
 
     override val primaryKey = PrimaryKey(id)
@@ -35,7 +36,7 @@ fun likePost(likedById: Long, postId: Long): Boolean {
         transaction {
             CommentLikes.insert {
                 it[PostLikes.postId] = postId
-                it[CommentLikes.likedById] = likedById
+                it[PostLikes.likedById] = likedById
             }
             true
         }
@@ -45,11 +46,10 @@ fun likePost(likedById: Long, postId: Long): Boolean {
     }
 }
 
-fun isRequesterLikeOwner(userId: Long, commentId: Long): Boolean {
+fun isRequesterPostLikeOwner(userId: Long, postId: Long): Boolean {
     return try {
         transaction {
-            val match =
-                CommentLikes.select { (CommentLikes.commentId eq commentId) and (CommentLikes.likedById eq userId) }
+            val match = PostLikes.select { (PostLikes.postId eq postId) and (PostLikes.likedById eq userId) }
             match.count() > 0
         }
     } catch (e: Exception) {
@@ -58,11 +58,11 @@ fun isRequesterLikeOwner(userId: Long, commentId: Long): Boolean {
     }
 }
 
-fun unlikeComment(requesterId: Long, commentId: Long, commentLikesId: Long): Boolean {
-    if (isRequesterLikeOwner(requesterId, commentId) || isUserAdmin(requesterId)) {
+fun unlikePost(requesterId: Long, postId: Long, postLikeId: Long): Boolean {
+    if (isRequesterPostLikeOwner(requesterId, postId) || isUserAdmin(requesterId)) {
         try {
             return transaction {
-                val success = CommentLikes.deleteWhere { id eq commentLikesId }
+                val success = PostLikes.deleteWhere { id eq postLikeId }
                 success > 0
             }
         } catch (e: Exception) {
