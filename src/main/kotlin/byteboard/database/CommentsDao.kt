@@ -1,6 +1,7 @@
 package byteboard.database
 
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -73,15 +74,15 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
     return try {
         transaction {
             Comments.select { Comments.postId eq postId }.limit(pageSize, offset = (page - 1) * pageSize).map {
-                    Comment(
-                        it[Comments.content],
-                        it[Comments.postId],
-                        it[Comments.commenterId],
-                        it[Comments.isReply],
-                        it[Comments.parentCommentId],
-                        it[Comments.timeStamp]
-                    )
-                }
+                Comment(
+                    it[Comments.content],
+                    it[Comments.postId],
+                    it[Comments.commenterId],
+                    it[Comments.isReply],
+                    it[Comments.parentCommentId],
+                    it[Comments.timeStamp]
+                )
+            }
         }
     } catch (e: Exception) {
         println("Error getting comments by post: $e")
@@ -93,18 +94,46 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
     return try {
         transaction {
             Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = (page - 1) * pageSize).map {
-                    Comment(
-                        it[Comments.content],
-                        it[Comments.postId],
-                        it[Comments.commenterId],
-                        it[Comments.isReply],
-                        it[Comments.parentCommentId],
-                        it[Comments.timeStamp]
-                    )
-                }
+                Comment(
+                    it[Comments.content],
+                    it[Comments.postId],
+                    it[Comments.commenterId],
+                    it[Comments.isReply],
+                    it[Comments.parentCommentId],
+                    it[Comments.timeStamp]
+                )
+            }
         }
     } catch (e: Exception) {
         println("Error getting comments by post: $e")
         emptyList()
     }
 }
+
+fun isIdCommentPoster(userId: Long, commentId: Long): Boolean {
+    return try {
+        transaction {
+            val match = Comments.select { (Comments.id eq commentId) and (Comments.commenterId eq userId) }
+            match.count() > 0
+        }
+    } catch (e: Exception) {
+        logger.error { "Error checking who is comment poster" }
+        false
+    }
+}
+
+fun deleteCommentById(commentId: Long, requesterId: Long): Boolean {
+    return if (isUserAdmin(requesterId) || isIdCommentPoster(requesterId, commentId)) {
+        try {
+            transaction {
+                val success = Comments.deleteWhere { id eq commentId }
+                success > 0 // Check if any rows were deleted
+            }
+        } catch (e: Exception) {
+            println("Error deleting comment: $e")
+            false
+        }
+    } else false
+
+}
+
