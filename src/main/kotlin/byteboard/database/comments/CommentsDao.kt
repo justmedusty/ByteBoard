@@ -1,8 +1,8 @@
 package byteboard.database.comments
 
-import byteboard.database.users.Users
-import byteboard.database.users.isUserAdmin
-import byteboard.database.users.logger
+import byteboard.database.Users
+import byteboard.database.isUserAdmin
+import byteboard.database.logger
 import byteboard.database.posts.Posts
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -27,6 +27,7 @@ object Comments : Table(name = "Comments") {
 
 
 data class Comment(
+    val id: Long,
     val content: String,
     val postId: Long,
     val commenterId: Long,
@@ -59,6 +60,7 @@ fun getCommentById(id: Long): Comment? {
         transaction {
             Comments.select { Comments.id eq id }.singleOrNull()?.let {
                 Comment(
+                    it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],
@@ -79,6 +81,7 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
         transaction {
             Comments.select { Comments.postId eq postId }.limit(pageSize, offset = (page - 1) * pageSize).map {
                 Comment(
+                    it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],
@@ -99,6 +102,7 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
         transaction {
             Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = (page - 1) * pageSize).map {
                 Comment(
+                    it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],

@@ -1,9 +1,9 @@
 package byteboard.database.posts
 
 import byteboard.database.comments.CommentLikes
-import byteboard.database.users.Users
-import byteboard.database.users.isUserAdmin
-import byteboard.database.users.logger
+import byteboard.database.Users
+import byteboard.database.isUserAdmin
+import byteboard.database.logger
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction

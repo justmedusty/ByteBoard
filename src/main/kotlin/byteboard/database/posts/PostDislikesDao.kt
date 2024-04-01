@@ -1,6 +1,6 @@
 package byteboard.database.posts
 
-import byteboard.database.users.Users
+import byteboard.database.Users
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table

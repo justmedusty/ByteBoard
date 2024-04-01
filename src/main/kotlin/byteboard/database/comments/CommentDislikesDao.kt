@@ -1,8 +1,8 @@
 package byteboard.database.comments
 
-import byteboard.database.users.Users
-import byteboard.database.users.isUserAdmin
-import byteboard.database.users.logger
+import byteboard.database.Users
+import byteboard.database.isUserAdmin
+import byteboard.database.logger
 import byteboard.database.posts.Posts
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

@@ -1,4 +1,4 @@
-import byteboard.database.users.Users
+import byteboard.database.Users
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime

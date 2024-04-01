@@ -1,6 +1,6 @@
 package byteboard.configuration
 
-import byteboard.database.users.Users
+import byteboard.database.Users
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils

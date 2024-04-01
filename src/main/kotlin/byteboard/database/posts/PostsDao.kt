@@ -1,7 +1,7 @@
 package byteboard.database.posts
 
-import byteboard.database.users.Users
-import byteboard.database.users.logger
+import byteboard.database.Users
+import byteboard.database.logger
 import org.jetbrains.exposed.sql.*
 import java.time.LocalDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
@@ -25,18 +25,12 @@ data class Post(
 )
 
 
-fun createPost(userId: Long, content: String, topic: String): Boolean {
+fun createPost(userId: Long, content: String, topic: String,title : String): Boolean {
     return try {
         transaction {
-            // Insert post into Posts table and get the generated postId
+
             val postId = insertAndGetId(userId, topic)
-
-
-            if (postId != (-1).toLong() && addPostContents(content, postId)) {
-                true
-            } else {
-                false
-            }
+            postId != (-1).toLong() && addPostContents(content, postId, title)
 
 
         }
