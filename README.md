@@ -1,0 +1,1 @@
+This will be the backend for ByteBoard, a tech and dev related forum service that I will spend time writing in my "off-time" aka when I am not spending time learning unix progrmaming. It will have basic features such as posts, post topics ,user accounts, user dms, likes,dislikes etc. I will come up with more features as the app is actually built.
