@@ -1,4 +1,4 @@
-package byteboard.database
+package byteboard.database.users
 
 /**
  * Configure database

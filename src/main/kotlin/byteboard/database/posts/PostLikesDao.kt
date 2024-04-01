@@ -1,5 +1,9 @@
-package byteboard.database
+package byteboard.database.posts
 
+import byteboard.database.comments.CommentLikes
+import byteboard.database.users.Users
+import byteboard.database.users.isUserAdmin
+import byteboard.database.users.logger
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -15,7 +19,8 @@ object PostLikes : Table(name = "Likes") {
 
 
 data class Like(
-    val postId: Long, val likedBy: Long
+    val postId: Long,
+    val likedBy: Long
 )
 
 fun getLikesForPost(postId: Long): Long {

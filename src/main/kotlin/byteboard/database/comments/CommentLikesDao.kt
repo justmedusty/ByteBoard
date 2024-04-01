@@ -1,5 +1,8 @@
-package byteboard.database
+package byteboard.database.comments
 
+import byteboard.database.users.Users
+import byteboard.database.users.isUserAdmin
+import byteboard.database.users.logger
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -9,6 +12,9 @@ object CommentLikes : Table(name = "Likes") {
     val commentId: Column<Long?> = long("commentId").references(Comments.id).nullable().default(null)
     val likedById: Column<Long> = long("likedById").references(Users.id)
 
+    init {
+        index(true, commentId, likedById)
+    }
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -19,6 +25,21 @@ data class CommentLike(
     val commentId: Long,
     val likedById : Long
 )
+
+fun isCommentDisLikedByUser(commentId: Long,likedById: Long): Boolean{
+    return try {
+        transaction {
+            val alreadyLiked =  CommentLikes.select{
+                (CommentDislikes.commentId eq commentId) and (CommentDislikes.dislikedById eq likedById)
+            }
+            alreadyLiked.count() > 0
+
+        }
+    }catch (e:Exception){
+        logger.error {  e.message}
+        true
+    }
+}
 
 fun getLikesForComment(commentId: Long): Long {
     return try {
@@ -34,6 +55,10 @@ fun getLikesForComment(commentId: Long): Long {
 }
 
 fun likeComment(likedById: Long, commentId: Long): Boolean {
+
+    if(isCommentDisLikedByUser(commentId,likedById)){
+        unDislikeComment(likedById,commentId)
+    }
     return try {
         transaction {
             CommentLikes.insert {
