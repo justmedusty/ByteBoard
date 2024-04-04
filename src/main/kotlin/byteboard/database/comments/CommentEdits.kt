@@ -3,9 +3,12 @@ package byteboard.database.comments
 import Messages.long
 import byteboard.database.Users
 import byteboard.database.Users.references
+import byteboard.database.logger
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.datetime
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 
 object CommentEdits : Table(name = "CommentEdits") {
@@ -23,3 +26,19 @@ data class CommentEdit(
     val posterId : Long,
     val lastEdited : LocalDateTime
 )
+
+fun insertNewCommentEdit(commentsId: Long,userId: Long): Boolean{
+    return try {
+        transaction {
+            CommentEdits.insert {
+                it[commentId] = commentsId
+                it[posterId]= userId
+                it[lastEdited] = LocalDateTime.now()
+            }
+            true
+        }
+    }catch (e:Exception){
+        logger.error { e.message }
+        false
+    }
+}

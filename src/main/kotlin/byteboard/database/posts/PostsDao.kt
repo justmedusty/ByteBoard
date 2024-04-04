@@ -1,7 +1,6 @@
 package byteboard.database.posts
 
 import byteboard.database.Users
-import byteboard.database.comments.Comments
 import byteboard.database.isUserAdmin
 import byteboard.database.logger
 import org.jetbrains.exposed.sql.*
@@ -15,7 +14,7 @@ object Posts : Table(name = "Posts") {
     val id: Column<Long> = long("id").autoIncrement()
     val posterId: Column<Long> = long("posterId").references(Users.id)
     val topic: Column<String> = varchar("topic", 60)
-    val timestamp: Column<LocalDateTime> = datetime("time_posted").defaultExpression(CurrentDateTime)
+    val timestamp: Column<LocalDateTime> = datetime("timestamp").defaultExpression(CurrentDateTime)
 
 
     override val primaryKey = PrimaryKey(id)
@@ -26,12 +25,9 @@ data class Post(
     val poster: Long,
     val topic: String,
     val timeStamp: LocalDateTime,
-    val content : String,
+    val content: String,
     val likeCount: Long,
-    val dislikeCount : Long,
-    val comments:  List<Comments>,
-
-
+    val dislikeCount: Long,
 )
 
 
@@ -95,8 +91,35 @@ fun deletePost(userId: Long, postId: Long): Boolean {
 }
 
 
-fun fetchPostsByTopic(topic:String){
+fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int): List<Post> {
+    return try {
+        val relevantPostIds = Posts.select { Posts.topic eq postTopic }.map { it[Posts.id] }
+        transaction {
+            (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
+                    Posts.id,
+                    Posts.posterId,
+                    Posts.topic,
+                    Posts.timestamp,
+                    PostContents.content,
+                    PostLikes.id.count(),
+                    PostDislikes.id.count()
+                ).select { Posts.id inList relevantPostIds }.groupBy(Posts.id).orderBy(Posts.id)
+                .limit(limit, offset = ((page - 1) * limit).toLong()).map {
+                    Post(
+                        it[Posts.posterId],
+                        it[Posts.topic],
+                        it[Posts.timestamp],
+                        it[PostContents.content],
+                        it[PostLikes.id.count()],
+                        it[PostDislikes.id.count()],
 
-
-
+                        )
+                }
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        emptyList<Post>()
+    }
 }
+
+

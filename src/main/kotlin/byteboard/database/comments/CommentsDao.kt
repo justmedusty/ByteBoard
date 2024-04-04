@@ -145,3 +145,21 @@ fun deleteCommentById(commentId: Long, requesterId: Long): Boolean {
 
 }
 
+
+fun updateComment(userId: Long, commentId: Long, newComment: String): Boolean {
+    return if (isIdCommentPoster(userId, commentId)) {
+        try {
+            transaction {
+                Comments.update({ Comments.id eq commentId }) {
+                    it[Comments.content] = newComment
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+    } else {
+        false
+    }
+}

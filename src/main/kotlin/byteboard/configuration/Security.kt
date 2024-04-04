@@ -30,7 +30,7 @@ fun Application.configureSecurity() {
         }
     }
     authentication {
-        basic(name = "myauth1") {
+        basic(name = "basic") {
             realm = "Ktor Server"
             validate { credentials ->
                 if (credentials.name == credentials.password) {
@@ -38,28 +38,6 @@ fun Application.configureSecurity() {
                 } else {
                     null
                 }
-            }
-        }
-
-        form(name = "myauth2") {
-            userParamName = "user"
-            passwordParamName = "password"
-            challenge {
-                /**/
-            }
-        }
-    }
-    routing {
-        authenticate("myauth1") {
-            get("/protected/route/basic") {
-                val principal = call.principal<UserIdPrincipal>()!!
-                call.respondText("Hello ${principal.name}")
-            }
-        }
-        authenticate("myauth2") {
-            get("/protected/route/form") {
-                val principal = call.principal<UserIdPrincipal>()!!
-                call.respondText("Hello ${principal.name}")
             }
         }
     }
