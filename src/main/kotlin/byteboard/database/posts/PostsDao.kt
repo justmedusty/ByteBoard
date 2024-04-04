@@ -1,12 +1,15 @@
 package byteboard.database.posts
 
 import byteboard.database.Users
+import byteboard.database.comments.Comments
+import byteboard.database.isUserAdmin
 import byteboard.database.logger
 import org.jetbrains.exposed.sql.*
-import java.time.LocalDateTime
-import org.jetbrains.exposed.sql.javatime.datetime
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
+import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.LocalDateTime
 
 object Posts : Table(name = "Posts") {
     val id: Column<Long> = long("id").autoIncrement()
@@ -20,12 +23,19 @@ object Posts : Table(name = "Posts") {
 
 
 data class Post(
-    val poster: Long, val topic: String, val timeStamp: LocalDateTime
+    val poster: Long,
+    val topic: String,
+    val timeStamp: LocalDateTime,
+    val content : String,
+    val likeCount: Long,
+    val dislikeCount : Long,
+    val comments:  List<Comments>,
+
 
 )
 
 
-fun createPost(userId: Long, content: String, topic: String,title : String): Boolean {
+fun createPost(userId: Long, content: String, topic: String, title: String): Boolean {
     return try {
         transaction {
 
@@ -34,7 +44,7 @@ fun createPost(userId: Long, content: String, topic: String,title : String): Boo
 
 
         }
-    }catch (e:Exception){
+    } catch (e: Exception) {
         logger.error { e.message }
         false
     }
@@ -53,4 +63,40 @@ fun insertAndGetId(poster: Long, postTopic: String): Long {
         logger.error { }
         -1
     }
+}
+
+fun verifyUserId(userId: Long, postId: Long): Boolean {
+    return try {
+        transaction {
+            Posts.select {
+                (Posts.id eq postId) and (Posts.posterId eq userId)
+
+            }.count() > 0
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
+    }
+}
+
+fun deletePost(userId: Long, postId: Long): Boolean {
+    if (verifyUserId(userId, postId) || isUserAdmin(userId)) {
+        return try {
+            Posts.deleteWhere { id eq postId }
+            true
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+
+    } else {
+        return false
+    }
+}
+
+
+fun fetchPostsByTopic(topic:String){
+
+
+
 }
