@@ -289,3 +289,41 @@ fun isUserModerator(userId: Long): Boolean {
         return false
     }
 }
+
+fun suspendUser(userId: Long, requesterId: Long): Boolean {
+
+    if (isUserAdmin(requesterId)) {
+        return try {
+            transaction {
+                Users.update({ Users.id eq userId }) {
+                    it[isSuspended] = true
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+    }
+    return false
+
+}
+
+fun unSuspendUser(userId: Long, requesterId: Long): Boolean {
+
+    if (isUserAdmin(requesterId)) {
+        return try {
+            transaction {
+                Users.update({ Users.id eq userId }) {
+                    it[isSuspended] = false
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+    }
+    return false
+
+}
