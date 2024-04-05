@@ -41,6 +41,18 @@ fun getDislikesForPost(postId: Long): Long {
     }
 }
 
+fun isPostDislikedByUser(postId: Long, userId: Long): Boolean {
+    return try {
+        transaction {
+         PostDislikes.select((PostDislikes.postId eq postId) and (PostDislikes.dislikedById eq userId)).count() > 0
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
+    }
+
+
+}
 fun dislikePost(likedById: Long, postId: Long): Boolean {
     return try {
         transaction {

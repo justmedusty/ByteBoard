@@ -4,9 +4,8 @@ import byteboard.database.useraccount.Users
 import byteboard.database.comments.Comments
 import byteboard.database.useraccount.isUserAdmin
 import byteboard.database.useraccount.logger
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
@@ -60,4 +59,20 @@ fun editPost(postId: Long, userId: Long, newTitle: String?, newPostContents: Str
         }
     }
     return false
+}
+
+fun checkLastPostEdit(postId: Long, userId: Long): LocalDateTime? {
+    return try {
+        transaction {
+            val latestEdit = PostEdits.select { PostEdits.postId eq postId }
+                .orderBy(PostEdits.lastEdited, SortOrder.DESC)
+                .limit(1)
+                .singleOrNull()
+
+            latestEdit?.getOrNull(PostEdits.lastEdited)
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        null
+    }
 }

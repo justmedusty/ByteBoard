@@ -19,8 +19,7 @@ object PostLikes : Table(name = "Likes") {
 
 
 data class Like(
-    val postId: Long,
-    val likedBy: Long
+    val postId: Long, val likedBy: Long
 )
 
 fun getLikesForPost(postId: Long): Long {
@@ -34,6 +33,19 @@ fun getLikesForPost(postId: Long): Long {
         println("Error getting likes for post: $e")
         -1
     }
+}
+
+fun isPostLikedByUser(postId: Long, userId: Long): Boolean {
+    return try {
+        transaction {
+            PostLikes.select((PostLikes.postId eq postId) and (PostLikes.likedById eq userId)).count() > 0
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
+    }
+
+
 }
 
 fun likePost(likedById: Long, postId: Long): Boolean {
