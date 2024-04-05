@@ -1,4 +1,4 @@
-package byteboard.database
+package byteboard.database.useraccount
 
 /**
  * Configure database
@@ -38,8 +38,8 @@ data class User(
     val userName: String,
     val publicKey: String,
     val passwordHash: String,
-    val isAdmin : Boolean,
-    val isModerator : Boolean,
+    val isAdmin: Boolean,
+    val isModerator: Boolean,
     val isSuspended: Boolean
 )
 
@@ -156,15 +156,14 @@ fun getUserId(userName: String): Long {
  * @param id
  * @return
  */
-fun getUserName(id: String?): String? {
-    val userId = id?.toLongOrNull() // Convert the String ID to Int or adjust the conversion based on the actual ID type
+fun getUserName(id: Long): String? {
 
     return try {
-        transaction {
-            userId?.let { convertedId ->
-                Users.select { Users.id eq convertedId }.singleOrNull()?.get(Users.userName)
-            }
+        val result = transaction {
+            Users.select { Users.id eq id }.singleOrNull()?.get(Users.userName)
         }
+        return result
+
     } catch (e: Exception) {
         logger.error { "Error grabbing username $e" }
         null

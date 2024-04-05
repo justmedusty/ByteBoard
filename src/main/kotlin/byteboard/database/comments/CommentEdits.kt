@@ -1,9 +1,7 @@
 package byteboard.database.comments
 
-import Messages.long
-import byteboard.database.Users
-import byteboard.database.Users.references
-import byteboard.database.logger
+import byteboard.database.useraccount.Users
+import byteboard.database.useraccount.logger
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
