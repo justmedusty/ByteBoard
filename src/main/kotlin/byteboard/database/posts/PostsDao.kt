@@ -111,8 +111,7 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long): L
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername)
-                    if(username == null){ emptyList<Post>() }
+                    val username = getUserName(posterUsername)?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val lastEdited = checkLastPostEdit(postId, userId)
                     Post(
@@ -150,10 +149,7 @@ fun fetchMostRecentPosts(page: Int, limit: Int, userId: Long): List<Post> {
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername)
-                    if (username == null) {
-                        emptyList<Post>()
-                    }
+                    val username = getUserName(posterUsername)?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val lastEdited = checkLastPostEdit(postId, userId)
                     Post(
@@ -190,10 +186,7 @@ fun fetchMostDislikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername)
-                    if (username == null) {
-                        emptyList<Post>()
-                    }
+                    val username = getUserName(posterUsername)?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val lastEdited = checkLastPostEdit(postId, userId)
                     Post(
@@ -230,10 +223,7 @@ fun fetchMostLikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername)
-                    if (username == null) {
-                       emptyList<Post>()
-                    }
+                    val username = getUserName(posterUsername)?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val lastEdited = checkLastPostEdit(postId, userId)
 
@@ -271,10 +261,7 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername)
-                    if(username == null){
-                        emptyList<Post>()
-                    }
+                    val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val lastEdited = checkLastPostEdit(postId, userId)
                     Post(
