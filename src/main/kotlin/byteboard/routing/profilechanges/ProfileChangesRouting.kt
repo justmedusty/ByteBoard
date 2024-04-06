@@ -127,6 +127,30 @@ fun Application.configureProfileChanges() {
                 call.respond(HttpStatusCode.OK, mapOf("Response" to "Successfully updated public key"))
             }
 
+            post("/byteboard/profile/changeProfilePhoto"){
+                val postParams = call.receiveParameters()
+                val principal = call.principal<JWTPrincipal>()
+                val id = principal?.payload?.subject?.toLongOrNull()
+                val photo: ByteArray? =  postParams["profilePhoto"]?.toByteArray()
+                if (id == null || photo == null){
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error Occurred"))
+                }
+                if(photo!!.size > 1048576 ){
+                    call.respond(HttpStatusCode.PayloadTooLarge, mapOf("Response" to "Photo too large, must be < 10mb"))
+                }
+                if(photo.isEmpty()){
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Photo file empty"))
+                }
+
+                try {
+                    updateProfilePhoto(userId = id!!, photo )
+                }catch (e:Exception){
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error occurred while updating public key"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Successfully updated profile photo"))
+            }
+
 
 
         }
