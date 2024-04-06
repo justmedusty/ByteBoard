@@ -44,5 +44,8 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.2")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
     implementation("org.jetbrains.exposed:exposed-java-time:0.40.1")
+    implementation("org.pgpainless:pgpainless-core:1.6.6")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.74")
+    implementation("org.bouncycastle:bcpg-jdk18on:1.72.2")
 
 }

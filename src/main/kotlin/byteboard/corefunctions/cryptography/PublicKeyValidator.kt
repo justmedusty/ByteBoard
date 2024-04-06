@@ -1,4 +1,4 @@
-package byteboard.corefunctions
+package byteboard.corefunctions.cryptography
 
 fun isValidOpenPGPPublicKey(publicKey: String): Boolean {
 
