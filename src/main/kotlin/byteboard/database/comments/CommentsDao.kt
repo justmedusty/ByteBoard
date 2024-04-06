@@ -34,6 +34,9 @@ data class Comment(
     val isReply: Boolean,
     val parentCommentId: Long?,
     val timeStamp: LocalDateTime
+,   val commentLikes : Long,
+    val commentDislikes : Long,
+    val lastEdited : LocalDateTime?
 )
 
 fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boolean, parentCommentId: Long?): Boolean {
@@ -55,9 +58,13 @@ fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boole
     }
 }
 
-fun getCommentById(id: Long): Comment? {
+fun getCommentById(id: Long,userId: Long?): Comment? {
     return try {
         transaction {
+            val commentLikes : Long = getLikesForComment(id)
+            val commentDislikes : Long = getDislikesForComment(id)
+            val lastEdited : LocalDateTime? = getLastCommentEdit(id)
+
             Comments.select { Comments.id eq id }.singleOrNull()?.let {
                 Comment(
                     it[Comments.id],
@@ -66,7 +73,10 @@ fun getCommentById(id: Long): Comment? {
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp]
+                    it[Comments.timeStamp],
+                    commentLikes,
+                    commentDislikes,
+                    lastEdited
                 )
             }
         }
@@ -79,7 +89,11 @@ fun getCommentById(id: Long): Comment? {
 fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
     return try {
         transaction {
+
             Comments.select { Comments.postId eq postId }.limit(pageSize, offset = (page - 1) * pageSize).map {
+                val commentLikes : Long = getLikesForComment(it[Comments.id])
+                val commentDislikes : Long = getDislikesForComment(it[Comments.id])
+                val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
@@ -87,7 +101,10 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp]
+                    it[Comments.timeStamp],
+                    commentLikes,
+                    commentDislikes,
+                    lastEdited
                 )
             }
         }
@@ -101,6 +118,9 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
     return try {
         transaction {
             Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = (page - 1) * pageSize).map {
+                val commentLikes : Long = getLikesForComment(it[Comments.id])
+                val commentDislikes : Long = getDislikesForComment(it[Comments.id])
+                val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
@@ -108,7 +128,10 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp]
+                    it[Comments.timeStamp],
+                    commentLikes,
+                    commentDislikes,
+                    lastEdited
                 )
             }
         }
