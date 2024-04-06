@@ -18,7 +18,7 @@ data class JWTConfig(
     val audience: String,
     val domain: String,
     val secret: String,
-    val id: Int,
+    val id: Long,
     val expiresInMS: Long,
 )
 

@@ -36,7 +36,7 @@ val logger = KotlinLogging.logger { }
  */
 data class User(
     val userName: String,
-    val publicKey: String,
+    val publicKey: String?,
     val passwordHash: String,
     val isAdmin: Boolean,
     val isModerator: Boolean,
