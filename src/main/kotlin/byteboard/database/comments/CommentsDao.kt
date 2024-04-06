@@ -36,7 +36,9 @@ data class Comment(
     val timeStamp: LocalDateTime
 ,   val commentLikes : Long,
     val commentDislikes : Long,
-    val lastEdited : LocalDateTime?
+    val lastEdited : LocalDateTime?,
+    val isCommentLikedByMe : Boolean,
+    val isCommentDislikedByMe : Boolean
 )
 
 fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boolean, parentCommentId: Long?): Boolean {
@@ -53,7 +55,7 @@ fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boole
             true
         }
     } catch (e: Exception) {
-        println("Error posting comment: $e")
+        logger.error { e.message }
         false
     }
 }
@@ -64,6 +66,8 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
             val commentLikes : Long = getLikesForComment(id)
             val commentDislikes : Long = getDislikesForComment(id)
             val lastEdited : LocalDateTime? = getLastCommentEdit(id)
+            val isCommentLiked : Boolean = isCommentLikedByUser(id,userId)
+            val isCommentDisliked : Boolean = isCommentLikedByUser(id,userId)
 
             Comments.select { Comments.id eq id }.singleOrNull()?.let {
                 Comment(
@@ -76,17 +80,19 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
                     it[Comments.timeStamp],
                     commentLikes,
                     commentDislikes,
-                    lastEdited
+                    lastEdited,
+                    isCommentLiked,
+                    isCommentDisliked
                 )
             }
         }
     } catch (e: Exception) {
-        println("Error getting comment by ID: $e")
+        logger.error { e.message }
         null
     }
 }
 
-fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
+fun getCommentsByPost(postId: Long, pageSize: Int, page: Long,userId: Long?): List<Comment> {
     return try {
         transaction {
 
@@ -94,6 +100,9 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
                 val commentLikes : Long = getLikesForComment(it[Comments.id])
                 val commentDislikes : Long = getDislikesForComment(it[Comments.id])
                 val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
+                val isCommentLiked : Boolean = isCommentLikedByUser(it[Comments.id],userId)
+                val isCommentDisliked : Boolean = isCommentLikedByUser(it[Comments.id],userId)
+
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
@@ -104,23 +113,27 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Long): List<Comment> {
                     it[Comments.timeStamp],
                     commentLikes,
                     commentDislikes,
-                    lastEdited
+                    lastEdited,
+                    isCommentLiked,
+                    isCommentDisliked
                 )
             }
         }
     } catch (e: Exception) {
-        println("Error getting comments by post: $e")
+        logger.error { e.message }
         emptyList()
     }
 }
 
-fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
+fun getCommentsByUser(userId: Long, pageSize: Int, page: Long,requesterId: Long?): List<Comment> {
     return try {
         transaction {
             Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = (page - 1) * pageSize).map {
                 val commentLikes : Long = getLikesForComment(it[Comments.id])
                 val commentDislikes : Long = getDislikesForComment(it[Comments.id])
                 val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
+                val isCommentLiked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
+                val isCommentDisliked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
@@ -131,12 +144,14 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Long): List<Comment> {
                     it[Comments.timeStamp],
                     commentLikes,
                     commentDislikes,
-                    lastEdited
+                    lastEdited,
+                    isCommentLiked,
+                    isCommentDisliked
                 )
             }
         }
     } catch (e: Exception) {
-        println("Error getting comments by post: $e")
+        logger.error { e.message }
         emptyList()
     }
 }
@@ -161,7 +176,7 @@ fun deleteCommentById(commentId: Long, requesterId: Long): Boolean {
                 success > 0 // Check if any rows were deleted
             }
         } catch (e: Exception) {
-            println("Error deleting comment: $e")
+            logger.error { e.message }
             false
         }
     } else false

@@ -21,24 +21,27 @@ object CommentLikes : Table(name = "Likes") {
 
 
 data class CommentLike(
-    val id : Long ,
-    val commentId: Long,
-    val likedById : Long
+    val id: Long, val commentId: Long, val likedById: Long
 )
 
-fun isCommentDisLikedByUser(commentId: Long,likedById: Long): Boolean{
-    return try {
-        transaction {
-            val alreadyLiked =  CommentLikes.select{
-                (CommentDislikes.commentId eq commentId) and (CommentDislikes.dislikedById eq likedById)
-            }
-            alreadyLiked.count() > 0
+fun isCommentDisLikedByUser(commentId: Long, likedById: Long?): Boolean {
+    return if (likedById == null) {
+        return false
+    } else {
+        try {
+            transaction {
+                val alreadyLiked = CommentLikes.select {
+                    (CommentDislikes.commentId eq commentId) and (CommentDislikes.dislikedById eq likedById)
+                }
+                alreadyLiked.count() > 0
 
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            true
         }
-    }catch (e:Exception){
-        logger.error {  e.message}
-        true
     }
+
 }
 
 fun getLikesForComment(commentId: Long): Long {
@@ -56,8 +59,8 @@ fun getLikesForComment(commentId: Long): Long {
 
 fun likeComment(likedById: Long, commentId: Long): Boolean {
 
-    if(isCommentDisLikedByUser(commentId,likedById)){
-        unDislikeComment(likedById,commentId)
+    if (isCommentDisLikedByUser(commentId, likedById)) {
+        unDislikeComment(likedById, commentId)
     }
     return try {
         transaction {

@@ -68,7 +68,7 @@ fun userNameAlreadyExists(userName: String): Boolean {
  * @param userName
  * @param password
  * @return
- */ // this was a major pain in the cock to get the hashing to work
+ */
 fun verifyCredentials(userName: String, password: String): Boolean {
     return try {
         transaction {

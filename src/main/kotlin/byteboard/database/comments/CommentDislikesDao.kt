@@ -30,8 +30,11 @@ data class Dislike(
     val dislikedById : Long
 )
 
-fun isCommentLikedByUser(commentId: Long,dislikedById: Long): Boolean{
-    return try {
+fun isCommentLikedByUser(commentId: Long,dislikedById: Long?): Boolean{
+    return if (dislikedById == null){
+        false
+    }
+    else try {
         transaction {
             val alreadyLiked =  CommentLikes.select{
                (CommentLikes.commentId eq commentId) and (CommentLikes.likedById eq dislikedById)
