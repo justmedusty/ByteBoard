@@ -1,11 +1,8 @@
 package byteboard.database.useraccount
 
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.ReferenceOption
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 
 
 object ProfileData : Table(name = "ProfileData") {
@@ -14,12 +11,13 @@ object ProfileData : Table(name = "ProfileData") {
     val bio = text("bio").nullable()
     val publicKey = text("public_key").nullable()
     val profilePhoto: Column<ExposedBlob?> = blob("profile_photo").nullable()
+    val autoEncrypt : Column<Boolean> = bool("auth_encrypt").default(false )
 
     override val primaryKey = PrimaryKey(id)
 }
 
 data class ProfileDataEntry(
-    val userName: String, val bio: String?, val publicKey: String?, val profilePhoto: ByteArray?
+    val userName: String, val bio: String?, val publicKey: String?, val profilePhoto: ByteArray?,val autoEncrypt : Boolean
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -90,3 +88,20 @@ fun updateProfilePhoto(userId: Long, photo: ByteArray): Boolean {
     }
 }
 
+fun changeAutoEncryptionFlag(userId: Long): Boolean {
+    return try {
+        transaction {
+            val currentAutoEncrypt = ProfileData.select { ProfileData.userId eq userId }
+                .map { it[ProfileData.autoEncrypt] }
+                .singleOrNull() ?: return@transaction false // If no user found, return false
+
+            ProfileData.update({ ProfileData.userId eq userId }) {
+                it[autoEncrypt] = !currentAutoEncrypt
+            }
+            true
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
+    }
+}

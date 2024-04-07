@@ -2,6 +2,7 @@ package byteboard.routing.account
 
 import byteboard.corefunctions.cryptography.isValidOpenPGPPublicKey
 import byteboard.database.useraccount.*
+import byteboard.enums.Length
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -93,7 +94,7 @@ fun Application.configureProfileChanges() {
                 if (id == null){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error Occurred"))
                 }
-                if(bioContents.isNullOrEmpty()){
+                if(bioContents.isEmpty()){
                     call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "New Bio Empty"))
                 }
                 try {
@@ -132,12 +133,15 @@ fun Application.configureProfileChanges() {
                 val principal = call.principal<JWTPrincipal>()
                 val id = principal?.payload?.subject?.toLongOrNull()
                 val photo: ByteArray? =  postParams["profilePhoto"]?.toByteArray()
+
                 if (id == null || photo == null){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error Occurred"))
                 }
-                if(photo!!.size > 1048576 ){
+
+                if(photo!!.size > Length.MAX_PHOTO_SIZE_BYTES.value ){
                     call.respond(HttpStatusCode.PayloadTooLarge, mapOf("Response" to "Photo too large, must be < 10mb"))
                 }
+
                 if(photo.isEmpty()){
                     call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Photo file empty"))
                 }

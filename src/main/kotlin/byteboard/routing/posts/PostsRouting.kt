@@ -1,7 +1,6 @@
 package byteboard.routing.posts
 
-import byteboard.database.posts.createPost
-import byteboard.database.posts.deletePost
+import byteboard.database.posts.*
 import byteboard.enums.Length
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -66,6 +65,31 @@ fun Application.configurePostsRouting(){
             }
 
             post("/byteboard/posts/like/{id}"){
+                val params= call.parameters
+                val postsId = params["postId"]?.toLongOrNull()
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                if(postsId == null || userId == null){
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if(isPostLikedByUser(postsId!!, userId!!)){
+                   val success = (unlikePost(userId,postsId))
+                    if(success){
+                        call.respond(HttpStatusCode.OK, mapOf("Response" to "Post Unliked"))
+                    }else{
+                        call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot unlike post"))
+                    }
+                }
+                else{
+                    val success = likePost(userId,postsId)
+                    if(success){
+                        call.respond(HttpStatusCode.OK, mapOf("Response" to "Post liked"))
+                    }else{
+                        call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot like post"))
+                    }
+                }
+
 
             }
             post("/byteboard/posts/dislike/{id}"){

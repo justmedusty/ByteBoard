@@ -75,11 +75,11 @@ fun isRequesterPostLikeOwner(userId: Long, postId: Long): Boolean {
     }
 }
 
-fun unlikePost(requesterId: Long, postId: Long, postLikeId: Long): Boolean {
-    if (isRequesterPostLikeOwner(requesterId, postId) || isUserAdmin(requesterId)) {
+fun unlikePost(requesterId: Long, postsId: Long): Boolean {
+    if (isRequesterPostLikeOwner(requesterId, postsId) || isUserAdmin(requesterId)) {
         try {
             return transaction {
-                val success = PostLikes.deleteWhere { id eq postLikeId }
+                val success = PostLikes.deleteWhere { (likedById eq requesterId)and(postId eq postsId) }
                 success > 0
             }
         } catch (e: Exception) {
