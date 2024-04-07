@@ -80,8 +80,7 @@ fun isRequesterPostDislikeOwner(userId: Long, postId: Long): Boolean {
     }
 }
 
-fun undislikePost(requesterId: Long, postId: Long, userId: Long): Boolean {
-    if (isRequesterPostDislikeOwner(requesterId, postId) || isUserAdmin(requesterId)) {
+fun unDislikePost(userId: Long, postId: Long): Boolean {
         try {
             return transaction {
                 val success = PostDislikes.deleteWhere { (PostDislikes.postId eq postId) and (PostDislikes.dislikedById eq userId) }
@@ -91,5 +90,4 @@ fun undislikePost(requesterId: Long, postId: Long, userId: Long): Boolean {
             logger.error { e.message }
             return false
         }
-    } else return false
 }

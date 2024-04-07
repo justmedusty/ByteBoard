@@ -9,7 +9,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Application.configurePostsRouting(){
+fun Application.configurePostsRouting() {
     routing {
         authenticate("jwt") {
 
@@ -18,81 +18,109 @@ fun Application.configurePostsRouting(){
                 val postsId = params["postId"]?.toLongOrNull()
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
-                if(userId == null || postsId == null || userId < 0 || postsId < 0){
+                if (userId == null || postsId == null || userId < 0 || postsId < 0) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error Occurred"))
                 }
 
-                val result = deletePost(userId!!,postsId!!)
-                if(result){
+                val result = deletePost(userId!!, postsId!!)
+                if (result) {
                     call.respond(HttpStatusCode.OK, mapOf("Response" to "Successfully Deleted Post"))
-                }else{
+                } else {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could Not Delete Post"))
                 }
             }
 
-            post("/byteboard/posts/create"){
+            post("/byteboard/posts/create") {
                 val params = call.parameters
                 val title = params["title"].toString()
                 val contents = params["contents"].toString()
                 val topic = params["topic"].toString()
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
-                if(topic.length > Length.MAX_TOPIC_LENGTH.value){
+                if (topic.length > Length.MAX_TOPIC_LENGTH.value) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Topic too large"))
                 }
 
-                if(contents.length > Length.MAX_CONTENT_LENGTH.value){
+                if (contents.length > Length.MAX_CONTENT_LENGTH.value) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Content too long"))
                 }
 
-                if(title.length > Length.MAX_TITLE_LENGTH.value){
+                if (title.length > Length.MAX_TITLE_LENGTH.value) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title too long"))
                 }
 
-                if(userId == null){
+                if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                val postCreationSuccess = createPost(userId!!,contents,topic,title)
+                val postCreationSuccess = createPost(userId!!, contents, topic, title)
 
-                if(postCreationSuccess){
+                if (postCreationSuccess) {
                     call.respond(HttpStatusCode.OK, mapOf("Response" to "Post published!"))
-                }
-                else{
-                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred while publishing post"))
+                } else {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("Response" to "An error occurred while publishing post")
+                    )
                 }
 
             }
 
-            post("/byteboard/posts/like/{id}"){
-                val params= call.parameters
+            post("/byteboard/posts/like/{id}") {
+                val params = call.parameters
                 val postsId = params["postId"]?.toLongOrNull()
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
-                if(postsId == null || userId == null){
+                if (postsId == null || userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                if(isPostLikedByUser(postsId!!, userId!!)){
-                   val success = (unlikePost(userId,postsId))
-                    if(success){
+                if (isPostLikedByUser(postsId!!, userId!!)) {
+                    val success = (unlikePost(userId, postsId))
+                    if (success) {
                         call.respond(HttpStatusCode.OK, mapOf("Response" to "Post Unliked"))
-                    }else{
+                    } else {
                         call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot unlike post"))
                     }
-                }
-                else{
-                    val success = likePost(userId,postsId)
-                    if(success){
+                } else {
+                    val success = likePost(userId, postsId)
+                    if (success) {
                         call.respond(HttpStatusCode.OK, mapOf("Response" to "Post liked"))
-                    }else{
+                    } else {
                         call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot like post"))
                     }
                 }
 
 
             }
-            post("/byteboard/posts/dislike/{id}"){
+            post("/byteboard/posts/dislike/{id}") {
+                val params = call.parameters
+                val postsId = params["postId"]?.toLongOrNull()
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                if (postsId == null || userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (isPostDislikedByUser(postsId!!, userId!!)) {
+                    val success = (unDislikePost(userId, postsId))
+                    if (success) {
+                        call.respond(HttpStatusCode.OK, mapOf("Response" to "Post Undisliked"))
+                    } else {
+                        call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot undislike post"))
+                    }
+                } else {
+                    val success = dislikePost(userId, postsId)
+                    if (success) {
+                        call.respond(HttpStatusCode.OK, mapOf("Response" to "Post disliked"))
+                    } else {
+                        call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot dislike post"))
+                    }
+                }
+
+
+            }
+            get("/byteboard/posts/topic"){
 
             }
         }
