@@ -37,11 +37,8 @@ data class Post(
 fun createPost(userId: Long, content: String, topic: String, title: String): Boolean {
     return try {
         transaction {
-
             val postId = insertAndGetId(userId, topic)
             postId != (-1).toLong() && addPostContents(content, postId, title)
-
-
         }
     } catch (e: Exception) {
         logger.error { e.message }
@@ -366,5 +363,44 @@ fun fetchPostsByTopicAndDislikes(page: Int, limit: Int, topic: String, userId: L
 
 
 
+fun fetchPostsByOldestAndTopic(page: Int, limit: Int, topic: String, userId: Long?): List<Post> {
+    return try {
+        transaction {
+            (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
+                Posts.id,
+                Posts.posterId,
+                Posts.topic,
+                Posts.timestamp,
+                PostContents.content,
+                PostLikes.postId.count(),
+                PostDislikes.postId.count()
+            ).select(Posts.topic eq topic).groupBy(Posts.id).orderBy(Posts.id, SortOrder.ASC)
+                .limit(limit, offset = ((page - 1) * limit).toLong()).map {
+                    val postId = it[Posts.id]
+                    val posterUsername = it[Posts.posterId]
+                    val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
+                    val isPostLikedByMe: Boolean = if (userId == null) {
+                        false
+                    } else {
+                        isPostLikedByUser(postId, userId)
+                    }
+                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    Post(
+                        username,
+                        it[Posts.topic],
+                        it[Posts.timestamp],
+                        it[PostContents.content],
+                        it[PostLikes.postId.count()],
+                        it[PostDislikes.postId.count()],
+                        isPostLikedByMe,
+                        lastEdited
+                    )
+                }
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        emptyList<Post>()
+    }
 
+}
 
