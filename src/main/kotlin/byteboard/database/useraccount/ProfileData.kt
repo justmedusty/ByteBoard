@@ -89,3 +89,4 @@ fun updateProfilePhoto(userId: Long, photo: ByteArray): Boolean {
         false
     }
 }
+

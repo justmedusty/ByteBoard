@@ -64,6 +64,13 @@ fun Application.configurePostsRouting(){
                 }
 
             }
+
+            post("/byteboard/posts/like/{id}"){
+
+            }
+            post("/byteboard/posts/dislike/{id}"){
+
+            }
         }
     }
 }
