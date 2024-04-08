@@ -1,4 +1,4 @@
-package byteboard.routing.account
+package byteboard.routing.profile
 
 import byteboard.corefunctions.cryptography.isValidOpenPGPPublicKey
 import byteboard.database.useraccount.*

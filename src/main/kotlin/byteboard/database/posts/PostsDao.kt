@@ -23,6 +23,7 @@ object Posts : Table(name = "Posts") {
 
 
 data class Post(
+    val id: Long,
     val posterUserName: String,
     val topic: String,
     val timeStamp: LocalDateTime,
@@ -113,8 +114,9 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long): L
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val isPostDislikedByMe = isPostDislikedByUser(postId, userId)
-                    val lastEdited = checkLastPostEdit(postId, userId)
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -136,7 +138,7 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long): L
 }
 
 
-fun fetchMostRecentPosts(page: Int, limit: Int, userId: Long): List<Post> {
+fun fetchMostRecentPosts(page: Int, limit: Int, userId: Long?): List<Post> {
     return try {
         transaction {
             (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
@@ -151,12 +153,22 @@ fun fetchMostRecentPosts(page: Int, limit: Int, userId: Long): List<Post> {
             ).selectAll().groupBy(Posts.id).orderBy(Posts.id, SortOrder.DESC)
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
-                    val posterUsername = it[Posts.posterId]
-                    val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
-                    val isPostLikedByMe = isPostLikedByUser(postId, userId)
-                    val isPostDislikedByMe = isPostDislikedByUser(postId, userId)
-                    val lastEdited = checkLastPostEdit(postId, userId)
+                    val posterId = it[Posts.posterId]
+                    val username = getUserName(posterId) ?: "Error getting username"
+                    val isPostLikedByMe : Boolean
+                    val isPostDislikedByMe : Boolean
+
+                    if(userId ==null){
+                        isPostDislikedByMe = false
+                        isPostLikedByMe = false
+                    }else{
+                        isPostLikedByMe =  isPostLikedByUser(postId, userId)
+                        isPostDislikedByMe = isPostDislikedByUser(postId, userId)
+                    }
+
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -196,8 +208,9 @@ fun fetchMostDislikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val isPostDislikedByMe = isPostDislikedByUser(postId, userId)
-                    val lastEdited = checkLastPostEdit(postId, userId)
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -237,9 +250,10 @@ fun fetchMostLikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val isPostDislikedByMe = isPostDislikedByUser(postId, userId)
-                    val lastEdited = checkLastPostEdit(postId, userId)
+                    val lastEdited = checkLastPostEdit(postId)
 
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -279,8 +293,9 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
                     val isPostLikedByMe = isPostLikedByUser(postId, userId)
                     val isPostDislikedByMe = isPostDislikedByUser(postId, userId)
-                    val lastEdited = checkLastPostEdit(postId, userId)
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -331,8 +346,9 @@ fun fetchPostsByTopicAndLikes(page: Int, limit: Int, topic: String, userId: Long
                         isPostDislikedByUser(postId, userId)
                     }
 
-                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -380,8 +396,9 @@ fun fetchPostsByTopicAndDislikes(page: Int, limit: Int, topic: String, userId: L
                         isPostDislikedByUser(postId, userId)
                     }
 
-                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -432,8 +449,9 @@ fun fetchPostsByOldestAndTopic(page: Int, limit: Int, topic: String, userId: Lon
                         isPostDislikedByUser(postId, userId)
                     }
 
-                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -471,8 +489,9 @@ fun fetchPostsLikedByMe(page: Int, limit: Int, topic: String, userId: Long): Lis
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
-                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -510,8 +529,9 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
                     val username = getUserName(posterUsername) ?: return@transaction emptyList<Post>()
-                    val lastEdited = checkLastPostEdit(postId, it[Posts.posterId])
+                    val lastEdited = checkLastPostEdit(postId)
                     Post(
+                        postId,
                         username,
                         it[Posts.topic],
                         it[Posts.timestamp],
@@ -530,4 +550,66 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
         emptyList<Post>()
     }
 
+}
+
+fun searchPostByTitleOrContents(userId: Long?, queryParam: String, limit: Int, page: Int): List<Post> {
+    return try {
+        transaction {
+            val query = "%$queryParam%"
+            val resultQuery = (Posts innerJoin PostContents leftJoin PostLikes leftJoin PostDislikes).slice(
+                Posts.id,
+                Posts.posterId,
+                Posts.topic,
+                Posts.timestamp,
+                PostContents.title,
+                PostContents.content,
+                PostLikes.postId.count(),
+                PostDislikes.postId.count()
+            ).select { (PostContents.title like query) or (PostContents.content like query) }
+
+            if (userId != null) {
+                resultQuery.andWhere { Posts.posterId eq userId }
+            }
+
+            val groupedQuery = resultQuery.groupBy(Posts.id).orderBy(Posts.id, SortOrder.DESC)
+                .limit(limit, ((page - 1) * limit).toLong())
+
+            val paginatedQuery = groupedQuery.alias("paginatedQuery")
+
+            (paginatedQuery innerJoin Posts).slice(paginatedQuery.columns).selectAll().map {
+                val postId = it[paginatedQuery[Posts.id]]
+                val posterUserId = it[paginatedQuery[Posts.posterId]]
+                val username = getUserName(posterUserId) ?: "Error occurred getting username"
+                val isLikedByMe: Boolean = if (userId != null) {
+                    isPostLikedByUser(it[paginatedQuery[Posts.id]], userId)
+                } else {
+                    false
+                }
+                val isDislikedByMe: Boolean = if (userId != null) {
+                    isPostDislikedByUser(it[paginatedQuery[Posts.id]], userId)
+                } else {
+                    false
+                }
+
+                val lastEdited = checkLastPostEdit(it[paginatedQuery[Posts.id]])
+
+                Post(
+                    postId,
+                    username,
+                    it[paginatedQuery[Posts.topic]],
+                    it[paginatedQuery[Posts.timestamp]],
+                    it[paginatedQuery[PostContents.title]],
+                    it[paginatedQuery[PostContents.content]],
+                    it[paginatedQuery[PostLikes.postId.count()]],
+                    it[paginatedQuery[PostDislikes.postId.count()]],
+                    isLikedByMe,
+                    isDislikedByMe,
+                    lastEdited
+                )
+            }
+        }
+    } catch (e: Exception) {
+        // Handle exceptions
+        emptyList<Post>()
+    }
 }

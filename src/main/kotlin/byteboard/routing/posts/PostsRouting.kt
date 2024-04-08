@@ -120,9 +120,52 @@ fun Application.configurePostsRouting() {
 
 
             }
-            get("/byteboard/posts/topic"){
+            get("/byteboard/posts/latest") {
 
-            }
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+                val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
+
+                val postList = fetchMostRecentPosts(page, limit, userId)
+
+                if (postList.isNotEmpty()) {
+
+                    call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+
+                } else call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
+
+
         }
+        get("/byteboard/posts/oldest") {
+
+        }
+        get("/byteboard/posts/topicNewest") {
+
+        }
+        get("/byteboard/posts/topicOldest") {
+
+        }
+        get("/byteboard/posts/topicLiked") {
+
+        }
+        get("/byteboard/posts/topicDisliked") {
+
+        }
+        get("/byteboard/posts/likedByMe") {
+
+        }
+        get("/byteboard/posts/dislikedByMe") {
+
+        }
+        get("/byteboard/posts/{id}") {
+
+        }
+        get("/byteboard/posts/{query}") {
+
+        }
+
     }
+}
 }

@@ -61,7 +61,7 @@ fun editPost(postId: Long, userId: Long, newTitle: String?, newPostContents: Str
     return false
 }
 
-fun checkLastPostEdit(postId: Long, userId: Long): LocalDateTime? {
+fun checkLastPostEdit(postId: Long): LocalDateTime? {
     return try {
         transaction {
             val latestEdit = PostEdits.select { PostEdits.postId eq postId }
