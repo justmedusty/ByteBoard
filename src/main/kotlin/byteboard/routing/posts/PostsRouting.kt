@@ -66,7 +66,7 @@ fun Application.configurePostsRouting() {
 
             }
 
-            post("/byteboard/posts/like/{id}") {
+            post("/byteboard/posts/like/{postId}") {
                 val params = call.parameters
                 val postsId = params["postId"]?.toLongOrNull()
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
@@ -93,7 +93,7 @@ fun Application.configurePostsRouting() {
 
 
             }
-            post("/byteboard/posts/dislike/{id}") {
+            post("/byteboard/posts/dislike/{postId}") {
                 val params = call.parameters
                 val postsId = params["postId"]?.toLongOrNull()
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
@@ -120,7 +120,7 @@ fun Application.configurePostsRouting() {
 
 
             }
-            get("/byteboard/posts/latest") {
+            get("/byteboard/posts/{order}") {
 
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
