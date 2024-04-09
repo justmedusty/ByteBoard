@@ -128,13 +128,49 @@ fun Application.configurePostsRouting() {
 
                 val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
 
-                val postList = fetchMostRecentPosts(page, limit, userId)
+                var postList:List<Post> = emptyList()
 
-                if (postList.isNotEmpty()) {
+                val order = call.parameters["order"]?.toString()
 
-                    call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+                if (order == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Order is required"))
+                }
+                //TODO decide how to handle non logged in users , will decide later. This can stay for now
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                when (order) {
+                    "recent" -> {
+                        postList = fetchMostRecentPosts(page,limit,userId)
+                    }
 
-                } else call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
+                    "old" -> {
+                        postList= fetchPostsByOldest(page,limit,userId)
+                    }
+
+                    "liked" -> {
+                        postList = fetchMostLikedPosts(page,limit,userId!!)
+                    }
+
+                    "disliked" -> {
+                        postList = fetchMostDislikedPosts(page,limit,userId!!)
+                    }
+
+                    else -> {
+                        // Handle unknown order here, maybe return an error response
+                    }
+                }
+
+
+
+            if (postList.isEmpty()) {
+
+                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+
+            } else call.respond(
+                HttpStatusCode.NoContent,
+                mapOf("Response" to "Could not fetch posts, an error may have occurred")
+            )
 
 
         }
@@ -159,7 +195,7 @@ fun Application.configurePostsRouting() {
         get("/byteboard/posts/dislikedByMe") {
 
         }
-        get("/byteboard/posts/{id}") {
+        get("/byteboard/postsById/{id}") {
 
         }
         get("/byteboard/posts/{query}") {

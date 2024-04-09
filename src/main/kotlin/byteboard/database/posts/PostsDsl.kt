@@ -340,7 +340,7 @@ fun fetchPostsByTopicAndLikes(page: Int, limit: Int, topic: String, userId: Long
                         isPostLikedByUser(postId, userId)
                     }
 
-                    val isPostDisikedByMe: Boolean = if (userId == null) {
+                    val isPostDislikedByMe: Boolean = if (userId == null) {
                         false
                     } else {
                         isPostDislikedByUser(postId, userId)
@@ -357,7 +357,7 @@ fun fetchPostsByTopicAndLikes(page: Int, limit: Int, topic: String, userId: Long
                         it[PostLikes.postId.count()],
                         it[PostDislikes.postId.count()],
                         isPostLikedByMe,
-                        isPostDisikedByMe,
+                        isPostDislikedByMe,
                         lastEdited
                     )
                 }
@@ -390,7 +390,7 @@ fun fetchPostsByTopicAndDislikes(page: Int, limit: Int, topic: String, userId: L
                     } else {
                         isPostLikedByUser(postId, userId)
                     }
-                    val isPostDisikedByMe: Boolean = if (userId == null) {
+                    val isPostDislikedByMe: Boolean = if (userId == null) {
                         false
                     } else {
                         isPostDislikedByUser(postId, userId)
@@ -407,7 +407,7 @@ fun fetchPostsByTopicAndDislikes(page: Int, limit: Int, topic: String, userId: L
                         it[PostLikes.postId.count()],
                         it[PostDislikes.postId.count()],
                         isPostLikedByMe,
-                        isPostDisikedByMe,
+                        isPostDislikedByMe,
 
                         lastEdited
                     )
@@ -443,7 +443,7 @@ fun fetchPostsByOldestAndTopic(page: Int, limit: Int, topic: String, userId: Lon
                     } else {
                         isPostLikedByUser(postId, userId)
                     }
-                    val isPostDisikedByMe: Boolean = if (userId == null) {
+                    val isPostDislikedByMe: Boolean = if (userId == null) {
                         false
                     } else {
                         isPostDislikedByUser(postId, userId)
@@ -460,7 +460,7 @@ fun fetchPostsByOldestAndTopic(page: Int, limit: Int, topic: String, userId: Lon
                         it[PostLikes.postId.count()],
                         it[PostDislikes.postId.count()],
                         isPostLikedByMe,
-                        isPostDisikedByMe,
+                        isPostDislikedByMe,
                         lastEdited
                     )
                 }
@@ -541,6 +541,57 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
                         it[PostDislikes.postId.count()],
                         likedByMe = false,
                         dislikedByMe = true,
+                        lastedEdited = lastEdited
+                    )
+                }
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        emptyList<Post>()
+    }
+
+}
+
+fun fetchPostsByOldest(page: Int, limit: Int, userId: Long?): List<Post> {
+    return try {
+        transaction {
+            (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
+                Posts.id,
+                Posts.posterId,
+                Posts.topic,
+                Posts.timestamp,
+                PostContents.title,
+                PostContents.content,
+                PostLikes.postId.count(),
+                PostDislikes.postId.count()
+            ).selectAll().groupBy(Posts.id).orderBy(Posts.id, SortOrder.ASC)
+                .limit(limit, offset = ((page - 1) * limit).toLong()).map {
+                    val postId = it[Posts.id]
+                    val posterUsername = it[Posts.posterId]
+                    val username = getUserName(posterUsername) ?: "Error getting username"
+                    val isPostLikedByMe: Boolean = if (userId == null) {
+                        false
+                    } else {
+                        isPostLikedByUser(postId, userId)
+                    }
+
+                    val isPostDislikedByMe: Boolean = if (userId == null) {
+                        false
+                    } else {
+                        isPostDislikedByUser(postId, userId)
+                    }
+                    val lastEdited = checkLastPostEdit(postId)
+                    Post(
+                        postId,
+                        username,
+                        it[Posts.topic],
+                        it[Posts.timestamp],
+                        it[PostContents.title],
+                        it[PostContents.content],
+                        it[PostLikes.postId.count()],
+                        it[PostDislikes.postId.count()],
+                        isPostLikedByMe,
+                        isPostDislikedByMe,
                         lastedEdited = lastEdited
                     )
                 }
