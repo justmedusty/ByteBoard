@@ -1,6 +1,7 @@
 package byteboard.database.useraccount
 
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -44,7 +45,30 @@ data class ProfileDataEntry(
         return result
     }
 }
+fun hasAutoEncryptionEnabled(userId: Long): Boolean {
+    return try {
+        transaction {
+            ProfileData.select((ProfileData.userId eq userId) and (ProfileData.autoEncrypt eq true))
+                .singleOrNull() != null
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
+    }
+}
 
+fun getPublicKey(userId: Long): String? {
+    return try {
+        transaction {
+            ProfileData.select(ProfileData.userId eq userId)
+                .map { it[ProfileData.publicKey] }
+                .singleOrNull() // Assuming publicKey is the column name storing public keys
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        null
+    }
+}
 fun updateBio(userId: Long, bioContents: String): Boolean {
     return try {
         transaction {

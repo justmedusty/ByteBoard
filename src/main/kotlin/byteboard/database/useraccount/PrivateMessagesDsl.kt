@@ -1,6 +1,4 @@
-import byteboard.database.useraccount.Users
-import byteboard.database.useraccount.getUserName
-import byteboard.database.useraccount.logger
+import byteboard.database.useraccount.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
@@ -22,14 +20,35 @@ data class Message(
 )
 
 
-fun insertMessage(sender: Long, receiver: Long, messageString: String): Boolean {
+fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
+
+    val publicKey: String?
+    var encryptedMessage: ByteArray? = null
+    if (hasAutoEncryptionEnabled(receiver)) {
+        publicKey = getPublicKey(receiver)
+        if (publicKey != null) {
+            encryptedMessage = encryptMessage(publicKey, messageString)
+        } else {
+            encryptedMessage = null
+        }
+
+    }
+
     return try {
 
         transaction {
+
             Messages.insert {
                 it[senderId] = sender
                 it[receiverId] = receiver
-                it[message] = messageString
+
+                if (encryptedMessage != null) {
+                    //TODO remember this is here and make sure this conversion works properly
+                    it[message] = encryptedMessage.contentToString()
+                } else {
+                    it[message] = messageString
+                }
+
                 it[timeSent] = LocalDateTime.now()
             }
             true
@@ -42,21 +61,20 @@ fun insertMessage(sender: Long, receiver: Long, messageString: String): Boolean 
 
 }
 
-fun getMessagesFromUser(requestorId: Long, requestedId: Long, page: Int, limit: Int): List<Message> {
+fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: Int): List<Message> {
     try {
         val offsetVal = ((page - 1) * limit).toLong()
 
         // Get sender and receiver usernames
         val senderUserNameString = getUserName(requestedId)
-        val receiverUserNameString = getUserName(requestorId)
+        val receiverUserNameString = getUserName(requesterId)
 
-        if(senderUserNameString != null && receiverUserNameString != null) {
+        if (senderUserNameString != null && receiverUserNameString != null) {
 
 
             return transaction {
-                Messages.select { (Messages.receiverId eq requestorId) and (Messages.senderId eq requestedId) }
-                    .limit(limit, offsetVal)
-                    .map {
+                Messages.select { (Messages.receiverId eq requesterId) and (Messages.senderId eq requestedId) }
+                    .limit(limit, offsetVal).map {
                         Message(
                             senderUserName = senderUserNameString,
                             receiverUserName = receiverUserNameString,
@@ -65,7 +83,7 @@ fun getMessagesFromUser(requestorId: Long, requestedId: Long, page: Int, limit: 
                         )
                     }
             }
-        }else{
+        } else {
             return emptyList()
         }
     } catch (e: Exception) {
@@ -74,27 +92,25 @@ fun getMessagesFromUser(requestorId: Long, requestedId: Long, page: Int, limit: 
     }
 }
 
-fun getAllMessages(userId : Long,page: Int,limit: Int) : List<Message>{
+fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message> {
     val offsetVal = ((page - 1) * limit).toLong()
     val receiverUserNameString = getUserName(userId)
-    if(receiverUserNameString != null) return try {
+    if (receiverUserNameString != null) return try {
         transaction {
 
-            Messages.select { (Messages.receiverId eq userId) }
-                .limit(limit, offsetVal)
-                .map {
-                    val senderId = it[Messages.senderId]
-                    val senderUserNameString = getUserName(senderId) ?: "Unknown"
+            Messages.select { (Messages.receiverId eq userId) }.limit(limit, offsetVal).map {
+                val senderId = it[Messages.senderId]
+                val senderUserNameString = getUserName(senderId) ?: "Unknown"
 
-                    Message(
-                        senderUserName = senderUserNameString,
-                        receiverUserName = receiverUserNameString,
-                        message = it[Messages.message],
-                        timeSent = it[Messages.timeSent]
-                    )
-                }
+                Message(
+                    senderUserName = senderUserNameString,
+                    receiverUserName = receiverUserNameString,
+                    message = it[Messages.message],
+                    timeSent = it[Messages.timeSent]
+                )
+            }
         }
-    }catch (e:Exception){
+    } catch (e: Exception) {
         logger.error { e.message }
         emptyList()
     } else return emptyList()
