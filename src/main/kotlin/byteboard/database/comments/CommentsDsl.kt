@@ -92,16 +92,62 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
     }
 }
 
-fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?): List<Comment> {
+fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, order: String?): List<Comment> {
+    var sortOrder: SortOrder? = null
+    var orderByColumn = Comments.id
+    var orderByCount: Count? = null
+
+    when (order) {
+        "oldest" -> {
+            sortOrder = SortOrder.DESC
+        }
+        "newest" -> {
+            sortOrder = SortOrder.ASC
+        }
+        "likes" -> {
+            orderByCount = CommentLikes.commentId.count()
+            sortOrder = SortOrder.DESC
+        }
+        "dislikes" -> {
+            orderByCount = CommentDislikes.commentId.count()
+            sortOrder = SortOrder.DESC
+        }
+        else -> {
+            sortOrder = SortOrder.DESC
+        }
+    }
+
     return try {
         transaction {
+            val query = Comments
+                .slice(
+                    Comments.id,
+                    Comments.content,
+                    Comments.postId,
+                    Comments.commenterId,
+                    Comments.isReply,
+                    Comments.parentCommentId,
+                    Comments.timeStamp
+                )
+                .select { Comments.postId eq postId }
+                .limit(pageSize, offset = ((page - 1) * pageSize).toLong())
 
-            Comments.select { Comments.postId eq postId }.limit(pageSize, offset = (page - 1) * pageSize).map {
-                val commentLikes : Long = getLikesForComment(it[Comments.id])
-                val commentDislikes : Long = getDislikesForComment(it[Comments.id])
-                val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
-                val isCommentLiked : Boolean = isCommentLikedByUser(it[Comments.id],userId)
-                val isCommentDisliked : Boolean = isCommentLikedByUser(it[Comments.id],userId)
+            if (orderByCount != null) {
+                query
+                    .orderBy(orderByCount, sortOrder)
+                    .groupBy(Comments.id)
+            } else {
+                query
+                    .orderBy(orderByColumn, sortOrder)
+                    .groupBy(Comments.id)
+            }
+
+            query.map {
+                val commentLikes: Long = getLikesForComment(it[Comments.id])
+                val commentDislikes: Long = getDislikesForComment(it[Comments.id])
+                val lastEdited: LocalDateTime? = getLastCommentEdit(it[Comments.id])
+                val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], userId)
+                val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], userId)
 
                 Comment(
                     it[Comments.id],
@@ -124,11 +170,10 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?): Li
         emptyList()
     }
 }
-
-fun getCommentsByUser(userId: Long, pageSize: Int, page: Long,requesterId: Long?): List<Comment> {
+fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?): List<Comment> {
     return try {
         transaction {
-            Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = (page - 1) * pageSize).map {
+            Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = ((page - 1) * pageSize).toLong()).map {
                 val commentLikes : Long = getLikesForComment(it[Comments.id])
                 val commentDislikes : Long = getDislikesForComment(it[Comments.id])
                 val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])

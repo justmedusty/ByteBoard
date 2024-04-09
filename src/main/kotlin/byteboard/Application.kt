@@ -1,6 +1,7 @@
 package byteboard
 
 import byteboard.configuration.*
+import byteboard.routing.comments.configureCommentsRouting
 import byteboard.routing.profile.configureProfileChanges
 import byteboard.routing.posts.configurePostsRouting
 import byteboard.security.configureRateLimiting
@@ -25,4 +26,5 @@ fun Application.module() {
     configureRateLimiting()
     configureLogin()
     configureProfileChanges()
+    configureCommentsRouting()
 }
