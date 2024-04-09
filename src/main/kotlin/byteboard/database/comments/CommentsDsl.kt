@@ -92,7 +92,7 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
     }
 }
 
-fun getCommentsByPost(postId: Long, pageSize: Int, page: Long,userId: Long?): List<Comment> {
+fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?): List<Comment> {
     return try {
         transaction {
 
