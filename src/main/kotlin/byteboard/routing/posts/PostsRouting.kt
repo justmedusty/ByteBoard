@@ -130,11 +130,8 @@ fun Application.configurePostsRouting() {
 
                 var postList:List<Post> = emptyList()
 
-                val order = call.parameters["order"]?.toString()
+                val order = call.parameters["order"] ?: "recent"
 
-                if (order == null) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Order is required"))
-                }
                 //TODO decide how to handle non logged in users , will decide later. This can stay for now
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
@@ -157,13 +154,12 @@ fun Application.configurePostsRouting() {
                     }
 
                     else -> {
-                        // Handle unknown order here, maybe return an error response
+                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid order"))
+
                     }
                 }
 
-
-
-            if (postList.isEmpty()) {
+            if (postList.isNotEmpty()) {
 
                 call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
 
@@ -174,31 +170,76 @@ fun Application.configurePostsRouting() {
 
 
         }
-        get("/byteboard/posts/oldest") {
+        get("/byteboard/posts/{topic}/{order}") {
+
+            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+            val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+            val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
+
+            var postList:List<Post> = emptyList()
+            val topic = call.parameters["topic"]
+            val order = call.parameters["order"]
+
+            if (topic.isNullOrEmpty()) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Topic is required"))
+            }
+            //TODO decide how to handle non logged in users , will decide later. This can stay for now
+            if (userId == null) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+            }
+            when (order) {
+                "recent" -> {
+                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!)
+                }
+
+                "old" -> {
+                    postList= fetchPostsByOldestAndTopic(page,limit,topic!!,userId)
+                }
+
+                "liked" -> {
+                    postList = fetchPostsByTopicAndLikes(page,limit, topic!!,userId!!)
+                }
+
+                "disliked" -> {
+                    postList = fetchPostsByTopicAndDislikes(page,limit,topic!!,userId!!)
+                }
+
+                else -> {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid order"))
+
+                }
+            }
+            if (postList.isNotEmpty()) {
+
+                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+
+            } else call.respond(
+                HttpStatusCode.NoContent,
+                mapOf("Response" to "Could not fetch posts, an error may have occurred")
+            )
+
+
 
         }
-        get("/byteboard/posts/topicNewest") {
+        get("/byteboard/posts/search/{query}") {
+            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
-        }
-        get("/byteboard/posts/topicOldest") {
+            val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-        }
-        get("/byteboard/posts/topicLiked") {
+            val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
 
-        }
-        get("/byteboard/posts/topicDisliked") {
+            val postList:List<Post>
+            val query = call.parameters["query"]
 
-        }
-        get("/byteboard/posts/likedByMe") {
+            if(query.isNullOrEmpty()){
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Query cannot be empty"))
+            }
 
-        }
-        get("/byteboard/posts/dislikedByMe") {
+            postList = searchPostByTitleOrContents(userId,query!!,limit,page)
 
-        }
-        get("/byteboard/postsById/{id}") {
-
-        }
-        get("/byteboard/posts/{query}") {
+            call.respond(HttpStatusCode.OK,mapOf(page to page,limit to limit, postList to postList))
 
         }
 
