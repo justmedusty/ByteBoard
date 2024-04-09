@@ -177,29 +177,36 @@ fun getUserName(id: Long): String? {
  * @param password
  * @param newValue
  */
-fun updateUserCredentials(userName: String, password: Boolean, newValue: String) {
-    try {
+fun updateUserCredentials(userName: String, password: Boolean, newValue: String) : Boolean {
+    return try {
         transaction {
             when {
                 !password && newValue.isNotEmpty() -> {
                     Users.update({ Users.userName eq userName }) {
                         it[Users.userName] = newValue
                     }
+                    return@transaction true
                 }
+
 
                 password && newValue.isNotEmpty() -> {
                     Users.update({ Users.userName eq userName }) {
                         it[passwordHash] = hashPassword(newValue)
                     }
+                    return@transaction true
                 }
 
+
+
                 else -> {
-                    throw IllegalArgumentException("An error occurred during the update")
+                    false
                 }
             }
+
         }
     } catch (e: Exception) {
         logger.error { "Error updating user credentials $e" }
+        false
     }
 }
 

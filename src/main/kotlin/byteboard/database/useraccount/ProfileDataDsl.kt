@@ -88,20 +88,36 @@ fun updateProfilePhoto(userId: Long, photo: ByteArray): Boolean {
     }
 }
 
-fun changeAutoEncryptionFlag(userId: Long): Boolean {
+fun doesUserHavePublicKey(userId: Long) : Boolean{
     return try {
         transaction {
-            val currentAutoEncrypt = ProfileData.select { ProfileData.userId eq userId }
-                .map { it[ProfileData.autoEncrypt] }
-                .singleOrNull() ?: return@transaction false // If no user found, return false
-
-            ProfileData.update({ ProfileData.userId eq userId }) {
-                it[autoEncrypt] = !currentAutoEncrypt
-            }
-            true
+            ProfileData.select { ProfileData.userId eq userId }
+                .map { it[ProfileData.publicKey] } // Assuming publicKey is the column name for storing public keys
+                .singleOrNull() != null // Check if public key exists for the user
         }
     } catch (e: Exception) {
         logger.error { e.message }
         false
+    }
+}
+fun changeAutoEncryptionFlag(userId: Long): Boolean {
+
+   return when {
+        doesUserHavePublicKey(userId) -> return try {
+            transaction {
+                val currentAutoEncrypt = ProfileData.select { ProfileData.userId eq userId }
+                    .map { it[ProfileData.autoEncrypt] }
+                    .singleOrNull() ?: return@transaction false // If no user found, return false
+
+                ProfileData.update({ ProfileData.userId eq userId }) {
+                    it[autoEncrypt] = !currentAutoEncrypt
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+        else -> false
     }
 }

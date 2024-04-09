@@ -1,5 +1,6 @@
 package byteboard.configuration
 
+import byteboard.database.useraccount.verifyCredentials
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.server.application.*
@@ -30,15 +31,17 @@ fun Application.configureSecurity() {
         }
     }
     authentication {
-        basic(name = "basic") {
-            realm = "Ktor Server"
+        basic(name="basic") {
+            realm = "ironcrypt"
             validate { credentials ->
-                if (credentials.name == credentials.password) {
+                if (verifyCredentials(credentials.name,credentials.password)) {
                     UserIdPrincipal(credentials.name)
                 } else {
                     null
                 }
             }
         }
+
+
     }
 }
