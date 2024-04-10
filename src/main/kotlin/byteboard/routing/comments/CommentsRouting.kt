@@ -31,7 +31,11 @@ fun Application.configureCommentsRouting() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                val commentList: List<Comment> = getCommentsByPost(postId!!, limit, page, userId, order)
+                val commentList: List<Comment>? = getCommentsByPost(postId!!, limit, page, userId, order)
+
+                if(commentList == null){
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
 
                 call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, commentList to commentList))
 
@@ -56,7 +60,11 @@ fun Application.configureCommentsRouting() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
             }
 
-            val commentList: List<Comment> = getCommentsByUser(uid!!, limit, page, userId)
+            val commentList: List<Comment>? = getCommentsByUser(uid!!, limit, page, userId)
+
+            if(commentList == null){
+                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+            }
 
             call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, commentList to commentList))
 

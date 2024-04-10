@@ -92,8 +92,8 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
     }
 }
 
-fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, order: String?): List<Comment> {
-    var sortOrder: SortOrder? = null
+fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, order: String?): List<Comment>? {
+    var sortOrder: SortOrder?
     var orderByColumn = Comments.id
     var orderByCount: Count? = null
 
@@ -167,10 +167,10 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, ord
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        emptyList()
+        null
     }
 }
-fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?): List<Comment> {
+fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?): List<Comment>? {
     return try {
         transaction {
             Comments.select { Comments.commenterId eq userId }.limit(pageSize, offset = ((page - 1) * pageSize).toLong()).map {
@@ -197,9 +197,41 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?)
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        emptyList()
+        null
     }
 }
+
+fun getChildComments(commentId: Long, pageSize: Int, page: Int,requesterId: Long?): List<Comment>? {
+    return try {
+        transaction {
+            Comments.select { Comments.parentCommentId eq commentId }.limit(pageSize, offset = ((page - 1) * pageSize).toLong()).map {
+                val commentLikes : Long = getLikesForComment(it[Comments.id])
+                val commentDislikes : Long = getDislikesForComment(it[Comments.id])
+                val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
+                val isCommentLiked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
+                val isCommentDisliked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
+                Comment(
+                    it[Comments.id],
+                    it[Comments.content],
+                    it[Comments.postId],
+                    it[Comments.commenterId],
+                    it[Comments.isReply],
+                    it[Comments.parentCommentId],
+                    it[Comments.timeStamp],
+                    commentLikes,
+                    commentDislikes,
+                    lastEdited,
+                    isCommentLiked,
+                    isCommentDisliked
+                )
+            }
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        null
+    }
+}
+
 
 fun isIdCommentPoster(userId: Long, commentId: Long): Boolean {
     return try {
