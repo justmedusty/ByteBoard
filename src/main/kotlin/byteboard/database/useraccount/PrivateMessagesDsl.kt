@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 
 object Messages : Table(name = "Messages") {
-    private val id: Column<Int> = integer("id").autoIncrement()
+    val id: Column<Long> = long("id").autoIncrement()
     val senderId: Column<Long> = long("sender_id").references(Users.id)
     val receiverId: Column<Long> = long("receiver_id").references(Users.id)
     val message: Column<String> = text("message")
@@ -16,7 +16,7 @@ object Messages : Table(name = "Messages") {
 }
 
 data class Message(
-    val senderUserName: String, val receiverUserName: String, val message: String, val timeSent: LocalDateTime
+    val id : Long,val senderUserName: String, val receiverUserName: String, val message: String, val timeSent: LocalDateTime
 )
 
 fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
@@ -75,6 +75,7 @@ fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: 
                 Messages.select { (Messages.receiverId eq requesterId) and (Messages.senderId eq requestedId) }
                     .limit(limit, offsetVal).map {
                         Message(
+                            id = it[Messages.id],
                             senderUserName = senderUserNameString,
                             receiverUserName = receiverUserNameString,
                             message = it[Messages.message],
@@ -103,6 +104,7 @@ fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message>? {
                     val senderUserNameString = getUserName(senderId) ?: "Unknown"
 
                     Message(
+                        id = it[Messages.id],
                         senderUserName = senderUserNameString,
                         receiverUserName = receiverUserNameString,
                         message = it[Messages.message],
