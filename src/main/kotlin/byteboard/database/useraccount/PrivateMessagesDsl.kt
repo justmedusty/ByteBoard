@@ -19,7 +19,6 @@ data class Message(
     val senderUserName: String, val receiverUserName: String, val message: String, val timeSent: LocalDateTime
 )
 
-
 fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
 
     val publicKey: String?
@@ -69,10 +68,10 @@ fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: 
         val senderUserNameString = getUserName(requestedId)
         val receiverUserNameString = getUserName(requesterId)
 
-        if (senderUserNameString != null && receiverUserNameString != null) {
+        return if (senderUserNameString != null && receiverUserNameString != null) {
 
 
-            return transaction {
+            transaction {
                 Messages.select { (Messages.receiverId eq requesterId) and (Messages.senderId eq requestedId) }
                     .limit(limit, offsetVal).map {
                         Message(
@@ -95,23 +94,25 @@ fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: 
 fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message> {
     val offsetVal = ((page - 1) * limit).toLong()
     val receiverUserNameString = getUserName(userId)
-    if (receiverUserNameString != null) return try {
-        transaction {
+    return if (receiverUserNameString != null) {
+        try {
+            transaction {
 
-            Messages.select { (Messages.receiverId eq userId) }.limit(limit, offsetVal).map {
-                val senderId = it[Messages.senderId]
-                val senderUserNameString = getUserName(senderId) ?: "Unknown"
+                Messages.select { (Messages.receiverId eq userId) }.limit(limit, offsetVal).map {
+                    val senderId = it[Messages.senderId]
+                    val senderUserNameString = getUserName(senderId) ?: "Unknown"
 
-                Message(
-                    senderUserName = senderUserNameString,
-                    receiverUserName = receiverUserNameString,
-                    message = it[Messages.message],
-                    timeSent = it[Messages.timeSent]
-                )
+                    Message(
+                        senderUserName = senderUserNameString,
+                        receiverUserName = receiverUserNameString,
+                        message = it[Messages.message],
+                        timeSent = it[Messages.timeSent]
+                    )
+                }
             }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            emptyList()
         }
-    } catch (e: Exception) {
-        logger.error { e.message }
-        emptyList()
     } else return emptyList()
 }

@@ -1,6 +1,7 @@
 package byteboard.routing.posts
 
 import byteboard.database.posts.*
+import byteboard.database.useraccount.isUserSuspended
 import byteboard.enums.Length
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -51,6 +52,10 @@ fun Application.configurePostsRouting() {
 
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if(isUserSuspended(userId!!)){
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
                 }
 
                 val postCreationSuccess = createPost(userId!!, contents, topic, title)

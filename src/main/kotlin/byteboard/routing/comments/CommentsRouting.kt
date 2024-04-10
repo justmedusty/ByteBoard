@@ -2,6 +2,7 @@ package byteboard.routing.comments
 
 
 import byteboard.database.comments.*
+import byteboard.database.useraccount.isUserSuspended
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -164,6 +165,10 @@ fun Application.configureCommentsRouting() {
 
             if (userId == null) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+            }
+
+            if(isUserSuspended(userId!!)){
+                call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
             }
 
             if(isReply!! && parentCommentId == null){

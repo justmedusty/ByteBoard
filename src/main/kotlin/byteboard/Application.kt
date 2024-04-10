@@ -2,9 +2,10 @@ package byteboard
 
 import byteboard.configuration.*
 import byteboard.routing.comments.configureCommentsRouting
-import byteboard.routing.profile.configureProfileChanges
+import byteboard.routing.account.configureProfileChanges
 import byteboard.routing.posts.configurePostsRouting
 import byteboard.security.configureRateLimiting
+import configureAdminPanelRouting
 import configureLogin
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -27,4 +28,5 @@ fun Application.module() {
     configureLogin()
     configureProfileChanges()
     configureCommentsRouting()
+    configureAdminPanelRouting()
 }
