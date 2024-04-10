@@ -60,7 +60,7 @@ fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
 
 }
 
-fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: Int): List<Message> {
+fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: Int): List<Message>? {
     try {
         val offsetVal = ((page - 1) * limit).toLong()
 
@@ -83,15 +83,15 @@ fun getMessagesFromUser(requesterId: Long, requestedId: Long, page: Int, limit: 
                     }
             }
         } else {
-            return emptyList()
+            null
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        return emptyList()  // Return an empty list if there's an error
+        return null //return null on error , not empty list, because empty list can mean more than just error, null can only mean error
     }
 }
 
-fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message> {
+fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message>? {
     val offsetVal = ((page - 1) * limit).toLong()
     val receiverUserNameString = getUserName(userId)
     return if (receiverUserNameString != null) {
@@ -112,7 +112,7 @@ fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message> {
             }
         } catch (e: Exception) {
             logger.error { e.message }
-            emptyList()
+            null
         }
-    } else return emptyList()
+    } else return null
 }

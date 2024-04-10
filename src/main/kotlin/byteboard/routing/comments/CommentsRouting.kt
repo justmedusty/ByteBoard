@@ -46,7 +46,7 @@ fun Application.configureCommentsRouting() {
             val limit: Int = call.parameters["limit"]?.toInt() ?: 50
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
             val uid: Long? = call.parameters["uid"]?.toLongOrNull()
-            val commentList: List<Comment>
+
 
             if (uid == null) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Requires user id"))
@@ -56,7 +56,7 @@ fun Application.configureCommentsRouting() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
             }
 
-            commentList = getCommentsByUser(uid!!, limit, page, userId)
+            val commentList: List<Comment> = getCommentsByUser(uid!!, limit, page, userId)
 
             call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, commentList to commentList))
 

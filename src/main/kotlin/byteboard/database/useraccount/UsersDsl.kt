@@ -334,3 +334,41 @@ fun unSuspendUser(userId: Long, requesterId: Long): Boolean {
     return false
 
 }
+
+fun giveAdmin(userId: Long, requesterId: Long): Boolean {
+
+    if (isUserAdmin(requesterId)) {
+        return try {
+            transaction {
+                Users.update({ Users.id eq userId }) {
+                    it[isAdmin] = true
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+    }
+    return false
+
+}
+
+fun takeAdmin(userId: Long, requesterId: Long): Boolean {
+
+    if (isUserAdmin(requesterId)) {
+        return try {
+            transaction {
+                Users.update({ Users.id eq userId }) {
+                    it[isAdmin] = false
+                }
+                true
+            }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            false
+        }
+    }
+    return false
+
+}
