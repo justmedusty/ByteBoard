@@ -1,6 +1,7 @@
 package byteboard.database.admin
 
 import byteboard.database.useraccount.Users
+import byteboard.database.useraccount.isUserAdmin
 import byteboard.database.useraccount.logger
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.javatime.datetime
@@ -43,6 +44,11 @@ fun insertSuspendEntry(userId: Long, isSuspend: Boolean, reasonString: String): 
 }
 
 fun getSuspendLogEntries(page: Int, limit: Int, userId: Long, order: String?): List<SuspendLogEntry>? {
+
+    if(!isUserAdmin(userId)){
+        return null
+    }
+
     val orderBy: SortOrder = if (order == "oldest") SortOrder.ASC else SortOrder.DESC
     val offsetVal = ((page - 1) * limit).toLong()
 
@@ -72,6 +78,12 @@ fun getSuspendLogEntries(page: Int, limit: Int, userId: Long, order: String?): L
 }
 
 fun getSuspendLogEntriesByAdmin(page: Int, limit: Int, userId: Long, order: String?,adminId: Long): List<SuspendLogEntry>? {
+
+    if(!isUserAdmin(userId)){
+        return null
+    }
+
+
     val orderBy: SortOrder = if (order == "oldest") SortOrder.ASC else SortOrder.DESC
     val offsetVal = ((page - 1) * limit).toLong()
 
@@ -83,7 +95,7 @@ fun getSuspendLogEntriesByAdmin(page: Int, limit: Int, userId: Long, order: Stri
                 SuspendLog.adminId,
                 SuspendLog.suspend,
                 SuspendLog.reason
-            ).select { SuspendLog.adminId eq userId }.orderBy(SuspendLog.timestamp to orderBy)
+            ).select { SuspendLog.adminId eq adminId }.orderBy(SuspendLog.timestamp to orderBy)
                 .limit(limit, offsetVal).map {
                     SuspendLogEntry(
                         it[SuspendLog.id],
