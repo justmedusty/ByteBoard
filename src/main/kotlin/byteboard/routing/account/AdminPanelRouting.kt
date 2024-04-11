@@ -1,3 +1,5 @@
+import byteboard.database.admin.insertAdminLogEntry
+import byteboard.database.admin.insertSuspendEntry
 import byteboard.database.useraccount.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -27,6 +29,13 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
                 }
 
+
+                val logResult = insertSuspendEntry(userId,true,reason!!,uid!!)
+
+                if(!logResult){
+                    call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
+                }
+
                 val result = suspendUser(uid!!, userId)
 
                 if (!result) {
@@ -53,6 +62,12 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
                 }
 
+                val logResult = insertSuspendEntry(userId,false,reason!!,uid!!)
+
+                if(!logResult){
+                    call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
+                }
+
                 val result = unSuspendUser(uid!!, userId)
 
                 if (!result) {
@@ -65,6 +80,7 @@ fun Application.configureAdminPanelRouting() {
         post("/byteboard/admin/giveadmin/{uid}") {
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
             val uid = call.parameters["uid"]?.toLongOrNull()
+            val reason = call.parameters["reason"]
 
             if (userId == null) {
                 call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
@@ -72,22 +88,35 @@ fun Application.configureAdminPanelRouting() {
             if (uid == null) {
                 call.respond(HttpStatusCode.BadRequest, "Response" to "UID required")
             }
+            if (reason == null) {
+            call.respond(HttpStatusCode.BadRequest, "Response" to "reason required")
+        }
 
             if (!isUserAdmin(userId!!)) {
                 call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
             }
 
-            val result = giveAdmin(uid!!, userId)
+            val logResult = insertAdminLogEntry(uid!!,userId,reason!!,true)
 
-            if (!result) {
+            if(!logResult){
+                call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
+            }
+
+            val finalResult = giveAdmin(uid!!, userId)
+
+            if (!finalResult) {
                 call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
             }
+
+
+
             call.respond(HttpStatusCode.BadRequest, "Response" to "User of uid $uid was given admin")
         }
 
         post("/byteboard/admin/takeadmin/{uid}") {
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
             val uid = call.parameters["uid"]?.toLongOrNull()
+            val reason = call.parameters["reason"]
 
             if (userId == null) {
                 call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
@@ -98,6 +127,12 @@ fun Application.configureAdminPanelRouting() {
 
             if (!isUserAdmin(userId!!)) {
                 call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
+            }
+
+            val logResult = insertAdminLogEntry(uid!!,userId,reason!!,false)
+
+            if(!logResult){
+                call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
             }
 
             val result = takeAdmin(uid!!, userId)

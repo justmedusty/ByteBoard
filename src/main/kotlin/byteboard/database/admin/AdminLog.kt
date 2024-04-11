@@ -31,7 +31,7 @@ data class AdminLog(
     val reason: String
 )
 
-fun insertSuspendLogEntry(user: Long,doneBy: Long,reasonString: String, addedBool: Boolean) : Boolean{
+fun insertAdminLogEntry(user: Long,doneBy: Long,reasonString: String, addedBool: Boolean) : Boolean{
 
     if(!isUserAdmin(user)){
         return false

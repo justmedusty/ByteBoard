@@ -10,8 +10,10 @@ import java.time.LocalDateTime
 
 object SuspendLog : Table(name = "SuspendLog") {
     val id: Column<Long> = long("id").autoIncrement()
-    val timestamp: Column<LocalDateTime> = datetime("suspendTime")
-    val adminId: Column<Long> = long("message_id").references(Users.id)
+    val timestamp: Column<LocalDateTime> = datetime("suspend_time")
+    val adminId: Column<Long> = long("admin_id").references(Users.id)
+    val suspendedUserId: Column<Long> = long("suspended_user_id")
+
     //true for suspend, false for unsuspend
     val suspend: Column<Boolean> = bool("suspend")
     val reason: Column<String> = text("reason")
@@ -21,16 +23,22 @@ object SuspendLog : Table(name = "SuspendLog") {
 
 
 data class SuspendLogEntry(
-    val id: Long, val time: LocalDateTime, val adminId: Long, val suspend: Boolean, val reason: String
+    val id: Long,
+    val time: LocalDateTime,
+    val adminId: Long,
+    val suspendedUser: Long,
+    val suspend: Boolean,
+    val reason: String
 )
 
 
-fun insertSuspendEntry(userId: Long, isSuspend: Boolean, reasonString: String): Boolean {
+fun insertSuspendEntry(userId: Long, isSuspend: Boolean, reasonString: String, suspendedUser: Long): Boolean {
     return try {
         transaction {
             SuspendLog.insert {
                 it[timestamp] = LocalDateTime.now()
                 it[adminId] = userId
+                it[suspendedUserId] = suspendedUser
                 it[suspend] = isSuspend
                 it[reason] = reasonString
             }.insertedCount > 0
@@ -45,7 +53,7 @@ fun insertSuspendEntry(userId: Long, isSuspend: Boolean, reasonString: String): 
 
 fun getSuspendLogEntries(page: Int, limit: Int, userId: Long, order: String?): List<SuspendLogEntry>? {
 
-    if(!isUserAdmin(userId)){
+    if (!isUserAdmin(userId)) {
         return null
     }
 
@@ -55,17 +63,13 @@ fun getSuspendLogEntries(page: Int, limit: Int, userId: Long, order: String?): L
     return try {
         transaction {
             SuspendLog.slice(
-                    SuspendLog.id,
-                    SuspendLog.timestamp,
-                    SuspendLog.adminId,
-                    SuspendLog.suspend,
-                    SuspendLog.reason
-                ).selectAll().orderBy(SuspendLog.id to orderBy)
-                .limit(limit, offsetVal).map {
+                SuspendLog.id, SuspendLog.timestamp, SuspendLog.adminId, SuspendLog.suspend, SuspendLog.reason
+            ).selectAll().orderBy(SuspendLog.id to orderBy).limit(limit, offsetVal).map {
                     SuspendLogEntry(
                         it[SuspendLog.id],
                         it[SuspendLog.timestamp],
                         it[SuspendLog.adminId],
+                        it[SuspendLog.suspendedUserId],
                         it[SuspendLog.suspend],
                         it[SuspendLog.reason]
                     )
@@ -77,9 +81,9 @@ fun getSuspendLogEntries(page: Int, limit: Int, userId: Long, order: String?): L
     }
 }
 
-fun getSuspendLogEntriesByAdmin(page: Int, limit: Int, userId: Long, order: String?,adminId: Long): List<SuspendLogEntry>? {
+fun getSuspendLogEntriesByAdmin(page: Int, limit: Int, userId: Long, order: String?, adminId: Long): List<SuspendLogEntry>? {
 
-    if(!isUserAdmin(userId)){
+    if (!isUserAdmin(userId)) {
         return null
     }
 
@@ -90,17 +94,14 @@ fun getSuspendLogEntriesByAdmin(page: Int, limit: Int, userId: Long, order: Stri
     return try {
         transaction {
             SuspendLog.slice(
-                SuspendLog.id,
-                SuspendLog.timestamp,
-                SuspendLog.adminId,
-                SuspendLog.suspend,
-                SuspendLog.reason
-            ).select { SuspendLog.adminId eq adminId }.orderBy(SuspendLog.timestamp to orderBy)
-                .limit(limit, offsetVal).map {
+                SuspendLog.id, SuspendLog.timestamp, SuspendLog.adminId, SuspendLog.suspend, SuspendLog.reason
+            ).select { SuspendLog.adminId eq adminId }.orderBy(SuspendLog.timestamp to orderBy).limit(limit, offsetVal)
+                .map {
                     SuspendLogEntry(
                         it[SuspendLog.id],
                         it[SuspendLog.timestamp],
                         it[SuspendLog.adminId],
+                        it[SuspendLog.suspendedUserId],
                         it[SuspendLog.suspend],
                         it[SuspendLog.reason]
                     )
