@@ -11,9 +11,9 @@ import io.ktor.server.routing.*
 
 fun Application.configureSecurity() {
     // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = "jwt-audience"
+    val jwtAudience = "byteboard"
     val jwtDomain = "https://jwt-provider-domain/"
-    val jwtRealm = "ktor sample app"
+    val jwtRealm = "byteboard"
     val jwtSecret = "secret"
     authentication {
         jwt {
@@ -32,7 +32,7 @@ fun Application.configureSecurity() {
     }
     authentication {
         basic(name="basic") {
-            realm = "ironcrypt"
+            realm = "byteboard"
             validate { credentials ->
                 if (verifyCredentials(credentials.name,credentials.password)) {
                     UserIdPrincipal(credentials.name)

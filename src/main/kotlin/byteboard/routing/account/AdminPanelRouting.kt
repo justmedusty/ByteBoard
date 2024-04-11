@@ -14,6 +14,7 @@ fun Application.configureAdminPanelRouting() {
             post("/byteboard/admin/suspend/{uid}") {
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val uid = call.parameters["uid"]?.toLongOrNull()
+                val reason = call.parameters["reason"]
 
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
@@ -39,6 +40,7 @@ fun Application.configureAdminPanelRouting() {
             post("/byteboard/admin/unsuspend/{uid}") {
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val uid = call.parameters["uid"]?.toLongOrNull()
+                val reason = call.parameters["reason"]
 
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
