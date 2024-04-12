@@ -41,7 +41,7 @@ data class Comment(
     val isCommentDislikedByMe : Boolean
 )
 
-fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boolean, parentCommentId: Long?): Boolean {
+fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boolean, parentCommentId: Long?): Long? {
     return try {
         transaction {
             Comments.insert {
@@ -51,12 +51,24 @@ fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boole
                 it[Comments.isReply] = isReply
                 it[Comments.parentCommentId] = parentCommentId
                 it[timeStamp] = LocalDateTime.now()
-            }
-            true
+            } get Comments.id
+
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        false
+        null
+    }
+}
+
+fun getParentId(commentId: Long): Long? {
+    return try {
+        transaction {
+            val comment = Comments.select(Comments.id eq commentId).singleOrNull() ?: return@transaction null
+          comment[Comments.parentCommentId]!!
+        }
+
+    } catch (ex: Exception) {
+        null
     }
 }
 
@@ -104,8 +116,8 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
 }
 
 fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, order: String?): List<Comment>? {
-    var sortOrder: SortOrder?
-    var orderByColumn = Comments.id
+    val sortOrder: SortOrder?
+    val orderByColumn = Comments.id
     var orderByCount: Count? = null
 
     when (order) {

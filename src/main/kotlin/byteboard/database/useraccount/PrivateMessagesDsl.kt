@@ -16,7 +16,11 @@ object Messages : Table(name = "Messages") {
 }
 
 data class Message(
-    val id : Long,val senderUserName: String, val receiverUserName: String, val message: String, val timeSent: LocalDateTime
+    val id: Long,
+    val senderUserName: String,
+    val receiverUserName: String,
+    val message: String,
+    val timeSent: LocalDateTime
 )
 
 fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {

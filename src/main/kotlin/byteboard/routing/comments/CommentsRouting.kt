@@ -2,6 +2,8 @@ package byteboard.routing.comments
 
 
 import byteboard.database.comments.*
+import byteboard.database.posts.getPostOwnerId
+import byteboard.database.posts.insertPostNotification
 import byteboard.database.useraccount.isUserSuspended
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -152,6 +154,9 @@ fun Application.configureCommentsRouting() {
             val isReply : Boolean? = call.parameters["isReply"]?.toBoolean()
             val parentCommentId : Long? = call.parameters["parentId"]?.toLongOrNull()
             val postId : Long? = call.parameters["postId"]?.toLongOrNull()
+            val notif : Boolean
+            var parentCommentUser : Long? = null
+            var poster : Long? = null
 
 
             if(content == null){
@@ -183,15 +188,38 @@ fun Application.configureCommentsRouting() {
                 call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reply must have a parent"))
             }
 
-            val result = postComment(content!!,userId!!,postId!!,isReply!!,parentCommentId)
+            if(parentCommentId != null ){
+              parentCommentUser = getCommentOwnerId(parentCommentId)
+            }else{
+                poster = getPostOwnerId(postId!!)
+            }
 
-            if(!result){
+            val result = postComment(content!!, getCommentOwnerId(parentCommentId!!)!!,postId!!,isReply,parentCommentId)
+
+            if(result == null){
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not post comment"))
             }
 
+            notif = if (isReply == true && parentCommentUser != null) {
+
+                insertCommentNotification(result!!, parentCommentUser)
+
+            } else if ((isReply == false) && (parentCommentUser == null) && (poster != null)) {
+
+                insertPostNotification(postId, poster)
+
+            } else {
+
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid parameters"))
+                false
+            }
+
+            if(!notif){
+                call.respond(HttpStatusCode.OK,mapOf("Response" to "Comment posted but notification failed"))
+            }
+
+
             call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted"))
-
-
 
         }
         post("/byteboard/comments/delete/{commentId}"){
