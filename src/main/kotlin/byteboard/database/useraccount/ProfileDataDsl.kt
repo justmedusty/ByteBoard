@@ -18,7 +18,11 @@ object ProfileData : Table(name = "ProfileData") {
 }
 
 data class ProfileDataEntry(
-    val userName: String, val bio: String?, val publicKey: String?, val profilePhoto: ByteArray?,val autoEncrypt : Boolean
+    val userName: String,
+    val bio: String?,
+    val publicKey: String?,
+    val profilePhoto: ByteArray?,
+    val autoEncrypt : Boolean
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -145,3 +149,20 @@ fun changeAutoEncryptionFlag(userId: Long): Boolean {
         else -> false
     }
 }
+
+fun getProfileDataEntry(userId: Long): ProfileDataEntry? {
+    var profileDataEntry: ProfileDataEntry? = null
+    transaction {
+        ProfileData.select { ProfileData.userId eq userId }.forEach {
+            profileDataEntry = ProfileDataEntry(
+                userName = getUserName(userId)?: "Could not get username",
+                bio = it[ProfileData.bio] ?: "No bio for this user",
+                publicKey = it[ProfileData.publicKey]?: "No public key for this user",
+                profilePhoto = it[ProfileData.profilePhoto]?.bytes,
+                autoEncrypt = it[ProfileData.autoEncrypt]
+            )
+        }
+    }
+    return profileDataEntry
+}
+
