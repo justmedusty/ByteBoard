@@ -16,3 +16,4 @@ object PostNotifications : Table(name = "PostNotifications") {
 
     override val primaryKey = PrimaryKey(id)
 }
+

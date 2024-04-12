@@ -60,6 +60,17 @@ fun postComment(content: String, commenterId: Long, postId: Long, isReply: Boole
     }
 }
 
+fun getCommentOwnerId(commentId: Long): Long? {
+    return try {
+        transaction {
+            val result = Comments.select { Comments.id eq commentId }.singleOrNull()
+            result?.get(Comments.commenterId)
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
+
 fun getCommentById(id: Long,userId: Long?): Comment? {
     return try {
         transaction {
@@ -201,15 +212,11 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?)
     }
 }
 
-fun getChildComments(commentId: Long, pageSize: Int, page: Int,requesterId: Long?): List<Comment>? {
+fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Long?): List<Comment>? {
     return try {
         transaction {
-            Comments.select { Comments.parentCommentId eq commentId }.limit(pageSize, offset = ((page - 1) * pageSize).toLong()).map {
-                val commentLikes : Long = getLikesForComment(it[Comments.id])
-                val commentDislikes : Long = getDislikesForComment(it[Comments.id])
-                val lastEdited : LocalDateTime? = getLastCommentEdit(it[Comments.id])
-                val isCommentLiked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
-                val isCommentDisliked : Boolean = isCommentLikedByUser(it[Comments.id],requesterId)
+            val parentComment = Comments.select { Comments.id eq commentId }.singleOrNull()
+            val parentCommentData = parentComment?.let {
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
@@ -218,13 +225,39 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int,requesterId: Long
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
                     it[Comments.timeStamp],
-                    commentLikes,
-                    commentDislikes,
-                    lastEdited,
-                    isCommentLiked,
-                    isCommentDisliked
+                    getLikesForComment(it[Comments.id]),
+                    getDislikesForComment(it[Comments.id]),
+                    getLastCommentEdit(it[Comments.id]),
+                    isCommentLikedByUser(it[Comments.id], requesterId),
+                    isCommentLikedByUser(it[Comments.id], requesterId)
                 )
             }
+
+            val childComments = Comments.select { Comments.parentCommentId eq commentId }
+                .limit(pageSize, offset = ((page - 1) * pageSize).toLong())
+                .map {
+                    val commentLikes: Long = getLikesForComment(it[Comments.id])
+                    val commentDislikes: Long = getDislikesForComment(it[Comments.id])
+                    val lastEdited: LocalDateTime? = getLastCommentEdit(it[Comments.id])
+                    val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
+                    val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
+                    Comment(
+                        it[Comments.id],
+                        it[Comments.content],
+                        it[Comments.postId],
+                        it[Comments.commenterId],
+                        it[Comments.isReply],
+                        it[Comments.parentCommentId],
+                        it[Comments.timeStamp],
+                        commentLikes,
+                        commentDislikes,
+                        lastEdited,
+                        isCommentLiked,
+                        isCommentDisliked
+                    )
+                }
+
+            parentCommentData?.let { listOf(it) + childComments } ?: childComments
         }
     } catch (e: Exception) {
         logger.error { e.message }

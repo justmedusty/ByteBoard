@@ -11,3 +11,4 @@ object CommentNotifications : Table(name = "CommentNotifications") {
 
     override val primaryKey = PrimaryKey(id)
 }
+

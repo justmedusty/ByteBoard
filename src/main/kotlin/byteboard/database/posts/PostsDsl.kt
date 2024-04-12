@@ -63,6 +63,17 @@ fun insertAndGetId(poster: Long, postTopic: String): Long {
     }
 }
 
+fun getPostOwnerId(postId: Long): Long? {
+    return try {
+        transaction {
+            val result = Posts.select { Posts.id eq postId }.singleOrNull()
+            result?.get(Posts.posterId)
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
+
 fun verifyUserId(userId: Long, postId: Long): Boolean {
     return try {
         transaction {
