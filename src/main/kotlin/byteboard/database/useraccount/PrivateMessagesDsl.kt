@@ -23,7 +23,7 @@ data class Message(
     val timeSent: LocalDateTime
 )
 
-fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
+fun sendMessage(sender: Long, receiver: Long, messageString: String): Long? {
 
     val publicKey: String?
     var encryptedMessage: ByteArray? = null
@@ -53,13 +53,13 @@ fun sendMessage(sender: Long, receiver: Long, messageString: String): Boolean {
                 }
 
                 it[timeSent] = LocalDateTime.now()
-            }
-            true
+            }get Messages.id
+
 
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        false
+        null
     }
 
 }

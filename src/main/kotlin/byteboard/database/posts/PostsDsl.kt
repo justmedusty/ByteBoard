@@ -560,7 +560,6 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
         logger.error { e.message }
         emptyList<Post>()
     }
-
 }
 
 fun fetchPostsByOldest(page: Int, limit: Int, userId: Long?): List<Post> {
@@ -671,7 +670,8 @@ fun searchPostByTitleOrContents(userId: Long?, queryParam: String, limit: Int, p
             }
         }
     } catch (e: Exception) {
-        // Handle exceptions
+        logger.error { e.message }
         emptyList<Post>()
     }
+
 }
