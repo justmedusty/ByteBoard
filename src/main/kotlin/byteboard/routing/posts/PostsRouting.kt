@@ -114,7 +114,7 @@ fun Application.configurePostsRouting() {
                     if (success) {
                         call.respond(HttpStatusCode.OK, mapOf("Response" to "Post liked"))
                     } else {
-                        call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot like post"))
+                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Cannot like post"))
                     }
                 }
 

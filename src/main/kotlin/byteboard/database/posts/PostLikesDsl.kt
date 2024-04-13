@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 object PostLikes : Table(name = "Likes") {
     val id: Column<Long> = long("id").autoIncrement()
-    val postId: Column<Long> = long("post").references(Posts.id, ReferenceOption.CASCADE)
+    val postId: Column<Long> = long("post_id").references(Posts.id, ReferenceOption.CASCADE)
     val likedById: Column<Long> = long("likedById").references(Users.id)
 
 
@@ -55,7 +55,7 @@ fun isPostLikedByUser(postId: Long, userId: Long): Boolean {
 fun likePost(likedById: Long, postId: Long): Boolean {
     return try {
         transaction {
-            CommentLikes.insert {
+            PostLikes.insert {
                 it[PostLikes.postId] = postId
                 it[PostLikes.likedById] = likedById
             }

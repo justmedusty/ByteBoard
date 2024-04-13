@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
-object CommentLikes : Table(name = "Likes") {
+object CommentLikes : Table(name = "CommentLikes") {
     val id: Column<Long> = long("id").autoIncrement()
     val commentId: Column<Long?> = long("commentId").references(Comments.id).nullable().default(null)
     val likedById: Column<Long> = long("likedById").references(Users.id)
