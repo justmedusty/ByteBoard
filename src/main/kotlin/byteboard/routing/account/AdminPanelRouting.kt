@@ -68,7 +68,7 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
                 }
 
-                val result = unSuspendUser(uid!!, userId)
+                val result = unSuspendUser(uid, userId)
 
                 if (!result) {
                     call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")

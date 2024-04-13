@@ -131,7 +131,7 @@ fun Application.configurePostsRouting() {
 
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-                val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
                 var postList:List<Post> = emptyList()
 
@@ -181,7 +181,7 @@ fun Application.configurePostsRouting() {
 
             val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-            val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
+            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
             var postList:List<Post> = emptyList()
             val topic = call.parameters["topic"]
@@ -233,7 +233,7 @@ fun Application.configurePostsRouting() {
 
             val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-            val limit = call.parameters["limit"]?.toIntOrNull() ?: 25
+            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
             val postList:List<Post>
             val query = call.parameters["query"]

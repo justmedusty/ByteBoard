@@ -9,9 +9,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object ProfileData : Table(name = "ProfileData") {
     val id: Column<Long> = long("id").autoIncrement()
     val userId: Column<Long> = long("user_id").references(Users.id, ReferenceOption.CASCADE)
-    val bio = text("bio").nullable()
-    val publicKey = text("public_key").nullable()
-    val profilePhoto: Column<ExposedBlob?> = blob("profile_photo").nullable()
+    val bio = text("bio").nullable().default(null)
+    val publicKey = text("public_key").nullable().default(null)
+    val profilePhoto: Column<ExposedBlob?> = blob("profile_photo").nullable().default(null)
     val autoEncrypt : Column<Boolean> = bool("auth_encrypt").default(false )
 
     override val primaryKey = PrimaryKey(id)

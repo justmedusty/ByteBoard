@@ -226,6 +226,7 @@ fun deleteUser(id: Long) {
 }
 
 fun fetchAllUsers(page: Int, limit: Int): List<String> {
+
     val offset: Long = ((page - 1) * limit).toLong()
     return try {
         transaction {

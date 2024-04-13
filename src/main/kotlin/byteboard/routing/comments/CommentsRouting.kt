@@ -5,6 +5,7 @@ import byteboard.database.comments.*
 import byteboard.database.posts.getPostOwnerId
 import byteboard.database.posts.insertPostNotification
 import byteboard.database.useraccount.isUserSuspended
+import byteboard.enums.Length
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -20,7 +21,7 @@ fun Application.configureCommentsRouting() {
 
                 val postId: Long? = call.parameters["postid"]?.toLongOrNull()
                 val page: Int = call.parameters["page"]?.toInt() ?: 1
-                val limit: Int = call.parameters["limit"]?.toInt() ?: 50
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
                 val order: String = call.parameters["order"] ?: "newest"
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
@@ -49,7 +50,7 @@ fun Application.configureCommentsRouting() {
         get("/byteboard/comments/get/user/{uid}") {
 
             val page: Int = call.parameters["page"]?.toInt() ?: 1
-            val limit: Int = call.parameters["limit"]?.toInt() ?: 50
+            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
             val uid: Long? = call.parameters["uid"]?.toLongOrNull()
 

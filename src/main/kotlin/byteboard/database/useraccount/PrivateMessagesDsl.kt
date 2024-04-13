@@ -1,5 +1,6 @@
 import byteboard.database.useraccount.*
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -121,4 +122,34 @@ fun getAllMessages(userId: Long, page: Int, limit: Int): List<Message>? {
             null
         }
     } else return null
+}
+
+fun getUsersWhoHaveMessagedYou(userId: Long, page: Int, limit: Int): List<ProfileDataEntry>? {
+    val offsetVal = ((page - 1) * limit).toLong()
+    val usersWithProfileData = mutableMapOf<Long, ProfileDataEntry>()
+
+    try {
+        transaction {
+            val senderIdsByMostRecent = Messages.select(Messages.receiverId eq userId)
+                .orderBy(Messages.id, SortOrder.DESC)
+                .limit(limit, offsetVal)
+                .map { it[Messages.senderId] }
+
+
+            senderIdsByMostRecent.forEach { senderId ->
+
+                if (!usersWithProfileData.containsKey(senderId)) {
+                    val senderProfileData = getProfileDataEntry(senderId)
+                    if (senderProfileData != null) {
+                        usersWithProfileData[senderId] = senderProfileData
+                    }
+                }
+            }
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        return null
+    }
+
+    return usersWithProfileData.values.toList()
 }

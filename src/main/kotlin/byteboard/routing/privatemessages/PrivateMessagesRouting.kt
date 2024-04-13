@@ -2,10 +2,12 @@ package byteboard.routing.privatemessages
 
 import Message
 import byteboard.database.useraccount.getUserId
+import byteboard.database.useraccount.insertMessageNotification
 import byteboard.database.useraccount.userNameAlreadyExists
 import byteboard.enums.Length
 import getAllMessages
 import getMessagesFromUser
+import getUsersWhoHaveMessagedYou
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -55,8 +57,14 @@ fun Application.configureMessageRoutes() {
 
                 val result = sendMessage(id!!, getUserId(receiver), message)
 
-                if (!result) {
+                if (result == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not send message"))
+                }
+
+                val notif = insertMessageNotification(result!!, id)
+
+                if(!notif){
+                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Message sent, notification to recipient failed"))
                 }
 
                 call.respond(HttpStatusCode.OK, mapOf("Response" to "Message sent"))
@@ -65,7 +73,7 @@ fun Application.configureMessageRoutes() {
             get("/byteboard/messages/fetchAll") {
                 val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 25
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
 
                 if (userId == null) {
@@ -83,7 +91,7 @@ fun Application.configureMessageRoutes() {
             get("/byteboard/messages/fetchByUser") {
                 val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 25
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
                 val senderUsername = call.parameters["sender"]
 
                 if(senderUsername.isNullOrEmpty()){
@@ -100,6 +108,23 @@ fun Application.configureMessageRoutes() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
                 call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, messages to messages))
+            }
+
+            get("/byteboard/messages/getAllSenders") {
+                val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
+                val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val profiles = getUsersWhoHaveMessagedYou(userId!!,page,limit)
+
+                if (profiles == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, profiles to profiles))
             }
         }
     }
