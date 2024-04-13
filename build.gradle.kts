@@ -1,7 +1,7 @@
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
-
+val h2_version: String by project
 plugins {
     kotlin("jvm") version "1.9.23"
     id("io.ktor.plugin") version "2.3.9"
@@ -46,5 +46,6 @@ dependencies {
     implementation("org.pgpainless:pgpainless-core:1.6.6")
     implementation("org.bouncycastle:bcprov-jdk18on:1.74")
     implementation("org.bouncycastle:bcpg-jdk18on:1.72.2")
+    implementation("com.h2database:h2:$h2_version")
 
 }

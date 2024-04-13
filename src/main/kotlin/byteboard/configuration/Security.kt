@@ -16,7 +16,7 @@ fun Application.configureSecurity() {
     val jwtRealm = "byteboard"
     val jwtSecret = "secret"
     authentication {
-        jwt {
+        jwt(name = "jwt") {
             realm = jwtRealm
             verifier(
                 JWT
@@ -31,14 +31,11 @@ fun Application.configureSecurity() {
         }
     }
     authentication {
-        basic(name="basic") {
+        basic(name = "basic") {
             realm = "byteboard"
             validate { credentials ->
-                if (verifyCredentials(credentials.name,credentials.password)) {
-                    UserIdPrincipal(credentials.name)
-                } else {
-                    null
-                }
+                if (verifyCredentials(credentials.name, credentials.password)
+                ) UserIdPrincipal(credentials.name) else null
             }
         }
 

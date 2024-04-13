@@ -35,7 +35,7 @@ fun Application.configureLogin() {
                 val userName = principal.name
                 val token = (createJWT(
                     JWTConfig(
-                        "encryptix-user",
+                        "byteboard",
                         "https://jwt-provider-domain/",
                         System.getenv("JWT_SECRET"),
                         getUserId(userName),
@@ -53,11 +53,12 @@ fun Application.configureLogin() {
             val user = User(
                 signup.userName,
                 null,
-                hashPassword(signup.password),
+                signup.password,
                 isAdmin = false,
                 isModerator = false,
                 isSuspended = false
             )
+            println(signup.password)
             when {
                 user.userName.length < 6 || user.userName.length > 45 -> {
                     call.respond(
