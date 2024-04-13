@@ -3,6 +3,7 @@ package byteboard
 import byteboard.configuration.*
 import byteboard.routing.comments.configureCommentsRouting
 import byteboard.routing.account.configureProfileChanges
+import byteboard.routing.account.configureUserProfileRouting
 import byteboard.routing.posts.configurePostsRouting
 import byteboard.routing.privatemessages.configureMessageRoutes
 import byteboard.security.configureRateLimiting
@@ -31,4 +32,5 @@ fun Application.module() {
     configureCommentsRouting()
     configureAdminPanelRouting()
     configureMessageRoutes()
+    configureUserProfileRouting()
 }
