@@ -7,10 +7,17 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Application.configurePostsRouting() {
+
+    data class PostReq(
+        val title : String,
+        val contents:String,
+        val topic: String
+    )
     routing {
         authenticate("jwt") {
 
@@ -32,11 +39,24 @@ fun Application.configurePostsRouting() {
             }
 
             post("/byteboard/posts/create") {
-                val params = call.parameters
-                val title = params["title"].toString()
-                val contents = params["contents"].toString()
-                val topic = params["topic"].toString()
+                val params = call.receive<PostReq>()
+                val title = params.title
+                val contents = params.contents
+                val topic = params.topic
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+
+                if(topic.isEmpty()){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Topic empty"))
+                }
+                if(contents.isEmpty()){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Contents empty"))
+                }
+                if(title.isEmpty()){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title empty"))
+                }
+
+
 
                 if (topic.length > Length.MAX_TOPIC_LENGTH.value) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Topic too large"))
@@ -53,6 +73,7 @@ fun Application.configurePostsRouting() {
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
+
 
                 if(isUserSuspended(userId!!)){
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))

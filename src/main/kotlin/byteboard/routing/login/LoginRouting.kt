@@ -36,10 +36,10 @@ fun Application.configureLogin() {
                 val token = (createJWT(
                     JWTConfig(
                         "byteboard",
-                        "https://jwt-provider-domain/",
+                        "https://byteboard.tech",
                         System.getenv("JWT_SECRET"),
                         getUserId(userName),
-                        900000,
+                        1600000,
                     ),
                 ))
                 call.respond(mapOf("access_token" to token))
@@ -51,12 +51,7 @@ fun Application.configureLogin() {
             val signup = call.receive<Signup>()
 
             val user = User(
-                signup.userName,
-                null,
-                signup.password,
-                isAdmin = false,
-                isModerator = false,
-                isSuspended = false
+                signup.userName, null, signup.password, isAdmin = false, isModerator = false, isSuspended = false
             )
             println(signup.password)
             when {

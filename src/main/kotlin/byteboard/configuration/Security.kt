@@ -12,9 +12,9 @@ import io.ktor.server.routing.*
 fun Application.configureSecurity() {
     // Please read the jwt property from the config file if you are using EngineMain
     val jwtAudience = "byteboard"
-    val jwtDomain = "https://jwt-provider-domain/"
+    val jwtDomain = "https://byteboard.tech"
     val jwtRealm = "byteboard"
-    val jwtSecret = "secret"
+    val jwtSecret = System.getenv("JWT_SECRET")
     authentication {
         jwt(name = "jwt") {
             realm = jwtRealm

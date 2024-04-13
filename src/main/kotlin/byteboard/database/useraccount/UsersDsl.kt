@@ -73,7 +73,8 @@ fun verifyCredentials(userName: String, password: String): Boolean {
     return try {
         transaction {
             val user = Users.select { Users.userName eq userName }.singleOrNull()
-           user != null && BCrypt.checkpw(password, user[Users.passwordHash])
+            val userpassword = user?.get(Users.passwordHash).toString()
+           user != null && BCrypt.checkpw(password, userpassword)
         }
     } catch (e: Exception) {
         logger.error { "Error verifying credentials $e" }
