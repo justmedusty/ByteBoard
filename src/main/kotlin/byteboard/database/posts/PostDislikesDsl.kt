@@ -53,8 +53,14 @@ fun isPostDislikedByUser(postId: Long, userId: Long): Boolean {
 
 }
 fun dislikePost(likedById: Long, postId: Long): Boolean {
+
     return try {
+
         transaction {
+
+            if(isPostLikedByUser(postId, likedById)){
+                unlikePost(likedById,postId)
+            }
             PostDislikes.insert {
                 it[PostDislikes.postId] = postId
                 it[PostDislikes.dislikedById] = likedById

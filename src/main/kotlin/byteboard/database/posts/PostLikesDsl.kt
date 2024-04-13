@@ -53,6 +53,11 @@ fun isPostLikedByUser(postId: Long, userId: Long): Boolean {
 }
 
 fun likePost(likedById: Long, postId: Long): Boolean {
+
+    if(isPostDislikedByUser(postId, likedById)){
+        unDislikePost(likedById,postId)
+    }
+
     return try {
         transaction {
             PostLikes.insert {
