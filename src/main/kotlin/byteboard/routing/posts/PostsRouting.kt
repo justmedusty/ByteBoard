@@ -108,6 +108,7 @@ fun Application.configurePostsRouting() {
                     } else {
                         call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Cannot unlike post"))
                     }
+
                 } else {
                     val success = likePost(userId, postsId)
                     if (success) {
@@ -196,7 +197,7 @@ fun Application.configurePostsRouting() {
 
 
         }
-        get("/byteboard/posts/{topic}/{order}") {
+        get("/byteboard/posts/topic/{order}") {
 
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
@@ -249,14 +250,14 @@ fun Application.configurePostsRouting() {
 
 
         }
-        get("/byteboard/posts/search/{query}") {
+        get("/byteboard/posts/search") {
             val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
             val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
             val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
-            val postList:List<Post>
+            val postList:List<Post>?
             val query = call.parameters["query"]
 
             if(query.isNullOrEmpty()){
@@ -264,8 +265,11 @@ fun Application.configurePostsRouting() {
             }
 
             postList = searchPostByTitleOrContents(userId,query!!,limit,page)
+            if(postList == null){
+                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+            }
 
-            call.respond(HttpStatusCode.OK,mapOf(page to page,limit to limit, postList to postList))
+            call.respond(HttpStatusCode.OK,mapOf("Page" to page,"Limit" to limit, "PostList" to postList))
 
         }
 

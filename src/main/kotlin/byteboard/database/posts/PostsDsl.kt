@@ -26,7 +26,7 @@ data class Post(
     val id: Long,
     val posterUserName: String,
     val topic: String,
-    val timeStamp: LocalDateTime,
+    val timeStamp: String,
     val title: String,
     val content: String,
     val likeCount: Long,
@@ -130,7 +130,7 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long): L
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -182,7 +182,7 @@ fun fetchMostRecentPosts(page: Int, limit: Int, userId: Long?): List<Post> {
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -224,7 +224,7 @@ fun fetchMostDislikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -267,7 +267,7 @@ fun fetchMostLikedPosts(page: Int, limit: Int, userId: Long): List<Post> {
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -309,7 +309,7 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -362,7 +362,7 @@ fun fetchPostsByTopicAndLikes(page: Int, limit: Int, topic: String, userId: Long
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -412,7 +412,7 @@ fun fetchPostsByTopicAndDislikes(page: Int, limit: Int, topic: String, userId: L
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -465,7 +465,7 @@ fun fetchPostsByOldestAndTopic(page: Int, limit: Int, topic: String, userId: Lon
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -505,7 +505,7 @@ fun fetchPostsLikedByMe(page: Int, limit: Int, topic: String, userId: Long): Lis
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -545,7 +545,7 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -595,7 +595,7 @@ fun fetchPostsByOldest(page: Int, limit: Int, userId: Long?): List<Post> {
                         postId,
                         username,
                         it[Posts.topic],
-                        it[Posts.timestamp],
+                        it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
@@ -612,66 +612,61 @@ fun fetchPostsByOldest(page: Int, limit: Int, userId: Long?): List<Post> {
     }
 
 }
-
-fun searchPostByTitleOrContents(userId: Long?, queryParam: String, limit: Int, page: Int): List<Post> {
+fun searchPostByTitleOrContents(userId: Long?, queryParam: String, limit: Int, page: Int): List<Post>? {
     return try {
+
         transaction {
             val query = "%$queryParam%"
-            val resultQuery = (Posts innerJoin PostContents leftJoin PostLikes leftJoin PostDislikes).slice(
-                Posts.id,
-                Posts.posterId,
-                Posts.topic,
-                Posts.timestamp,
-                PostContents.title,
-                PostContents.content,
-                PostLikes.postId.count(),
-                PostDislikes.postId.count()
-            ).select { (PostContents.title like query) or (PostContents.content like query) }
+            val postsWithContents = (Posts innerJoin PostContents)
+                .slice(
+                    Posts.id,
+                    Posts.posterId,
+                    Posts.topic,
+                    Posts.timestamp,
+                    PostContents.title,
+                    PostContents.content
+                )
+                .select { (PostContents.title like query) or (PostContents.content like query) }
 
             if (userId != null) {
-                resultQuery.andWhere { Posts.posterId eq userId }
+                postsWithContents.andWhere { Posts.posterId eq userId }
             }
 
-            val groupedQuery = resultQuery.groupBy(Posts.id).orderBy(Posts.id, SortOrder.DESC)
-                .limit(limit, ((page - 1) * limit).toLong())
+            val paginatedQuery = postsWithContents
+                .limit(limit, (page - 1) * limit.toLong())
+                .orderBy(Posts.id, SortOrder.DESC)
 
-            val paginatedQuery = groupedQuery.alias("paginatedQuery")
-
-            (paginatedQuery innerJoin Posts).slice(paginatedQuery.columns).selectAll().map {
-                val postId = it[paginatedQuery[Posts.id]]
-                val posterUserId = it[paginatedQuery[Posts.posterId]]
+            val posts = paginatedQuery.map { row ->
+                val postId = row[Posts.id]
+                val posterUserId = row[Posts.posterId]
                 val username = getUserName(posterUserId) ?: "Error occurred getting username"
-                val isLikedByMe: Boolean = if (userId != null) {
-                    isPostLikedByUser(it[paginatedQuery[Posts.id]], userId)
-                } else {
-                    false
-                }
-                val isDislikedByMe: Boolean = if (userId != null) {
-                    isPostDislikedByUser(it[paginatedQuery[Posts.id]], userId)
-                } else {
-                    false
-                }
-
-                val lastEdited = checkLastPostEdit(it[paginatedQuery[Posts.id]])
+                val isLikedByMe = userId != null && isPostLikedByUser(postId, userId)
+                val isDislikedByMe = userId != null && isPostDislikedByUser(postId, userId)
+                val lastEdited = checkLastPostEdit(postId)
 
                 Post(
                     postId,
                     username,
-                    it[paginatedQuery[Posts.topic]],
-                    it[paginatedQuery[Posts.timestamp]],
-                    it[paginatedQuery[PostContents.title]],
-                    it[paginatedQuery[PostContents.content]],
-                    it[paginatedQuery[PostLikes.postId.count()]],
-                    it[paginatedQuery[PostDislikes.postId.count()]],
+                    row[Posts.topic],
+                    row[Posts.timestamp].toString(),
+                    row[PostContents.title],
+                    row[PostContents.content],
+                    getLikesForPost(postId),
+                    getDislikesForPost(postId),
                     isLikedByMe,
                     isDislikedByMe,
                     lastEdited
                 )
             }
+
+            posts
+
         }
+
+
     } catch (e: Exception) {
-        logger.error { e.message }
-        emptyList<Post>()
+        logger.error("Error occurred while searching posts: ${e.message}")
+        null
     }
 
 }
