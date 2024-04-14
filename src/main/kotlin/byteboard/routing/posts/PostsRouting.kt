@@ -155,7 +155,7 @@ fun Application.configurePostsRouting() {
 
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
-                var postList:List<Post> = emptyList()
+                var postList:List<Post>? = emptyList()
 
                 val order = call.parameters["order"] ?: "recent"
 
@@ -165,19 +165,19 @@ fun Application.configurePostsRouting() {
                 }
                 when (order) {
                     "recent" -> {
-                        postList = fetchMostRecentPosts(page,limit,userId)
+                        postList = fetchPosts(page,limit,userId,"new")
                     }
 
                     "old" -> {
-                        postList= fetchPostsByOldest(page,limit,userId)
+                        postList = fetchPosts(page,limit,userId,"old")
                     }
 
                     "liked" -> {
-                        postList = fetchMostLikedPosts(page,limit,userId!!)
+                        postList = fetchPosts(page,limit,userId,"liked")
                     }
 
                     "disliked" -> {
-                        postList = fetchMostDislikedPosts(page,limit,userId!!)
+                        postList = fetchPosts(page,limit,userId,"disliked")
                     }
 
                     else -> {
@@ -186,9 +186,9 @@ fun Application.configurePostsRouting() {
                     }
                 }
 
-            if (postList.isNotEmpty()) {
+            if (postList != null) {
 
-                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
             } else call.respond(
                 HttpStatusCode.NoContent,
@@ -240,7 +240,7 @@ fun Application.configurePostsRouting() {
             }
             if (postList.isNotEmpty()) {
 
-                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, postList to postList))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
             } else call.respond(
                 HttpStatusCode.NoContent,
@@ -270,7 +270,7 @@ fun Application.configurePostsRouting() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
             }
 
-            call.respond(HttpStatusCode.OK,mapOf("Page" to page,"Limit" to limit, "PostList" to postList))
+            call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
         }
 
