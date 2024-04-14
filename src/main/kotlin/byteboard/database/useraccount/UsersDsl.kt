@@ -124,10 +124,14 @@ fun createUser(user: User) {
     return try {
         transaction {
             if (userAndPasswordValidation(user.userName, "") && userAndPasswordValidation("", user.passwordHash)) {
-                Users.insert {
+                val id : Long = Users.insert {
                     it[userName] = user.userName
                     it[passwordHash] = hashPassword(user.passwordHash)
                 } get Users.id
+
+                ProfileData.insert {
+                    it[userId] = id
+                }
             }
         }
     } catch (e: Exception) {

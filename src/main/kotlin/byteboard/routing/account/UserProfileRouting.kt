@@ -13,7 +13,7 @@ fun Application.configureUserProfileRouting(){
     routing {
         authenticate("jwt") {
 
-            post("/byteboard/profiles/get/{id}"){
+            get("/byteboard/profiles/get/{id}"){
 
                 val userId : Long? = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val uuid = call.parameters["id"]?.toLongOrNull()
