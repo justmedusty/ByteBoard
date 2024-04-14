@@ -33,7 +33,7 @@ fun Application.configureUserProfileRouting(){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not get profile data"))
                 }
 
-                call.respond(HttpStatusCode.OK, mapOf(result to result))
+                call.respond(HttpStatusCode.OK, mapOf("result" to result))
 
             }
 

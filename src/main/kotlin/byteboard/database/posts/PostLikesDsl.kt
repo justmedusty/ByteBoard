@@ -23,22 +23,18 @@ data class Like(
 )
 
 fun getLikesForPost(postId: Long): Long {
-    try {
-        val likes = transaction {
+   return try {
+        transaction {
             PostLikes.select {
                 (PostLikes.postId eq postId)
             }.count()
         }
-        if(likes == null || likes < 0 ){
-            return 0
-        }
+
     } catch (e: Exception) {
         println("Error getting likes for post: $e")
-        return -1
+         -1
     }
-    return -1
 }
-
 fun isPostLikedByUser(postId: Long, userId: Long): Boolean {
     return try {
         transaction {

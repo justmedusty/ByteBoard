@@ -79,7 +79,7 @@ fun Application.configurePostsRouting() {
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
                 }
 
-                val postCreationSuccess = createPost(userId!!, contents, topic, title)
+                val postCreationSuccess = createPost(userId, contents, topic, title)
 
                 if (postCreationSuccess) {
                     call.respond(HttpStatusCode.OK, mapOf("Response" to "Post published!"))
@@ -265,6 +265,7 @@ fun Application.configurePostsRouting() {
             }
 
             postList = searchPostByTitleOrContents(userId,query!!,limit,page)
+
             if(postList == null){
                 call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
             }
