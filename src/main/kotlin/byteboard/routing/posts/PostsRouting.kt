@@ -205,7 +205,7 @@ fun Application.configurePostsRouting() {
 
             val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
-            var postList:List<Post> = emptyList()
+            var postList:List<Post>? = null
             val topic = call.parameters["topic"]
             val order = call.parameters["order"]
 
@@ -218,19 +218,19 @@ fun Application.configurePostsRouting() {
             }
             when (order) {
                 "recent" -> {
-                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!)
+                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"new")
                 }
 
                 "old" -> {
-                    postList= fetchPostsByOldestAndTopic(page,limit,topic!!,userId)
+                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"old")
                 }
 
                 "liked" -> {
-                    postList = fetchPostsByTopicAndLikes(page,limit, topic!!,userId!!)
+                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"liked")
                 }
 
                 "disliked" -> {
-                    postList = fetchPostsByTopicAndDislikes(page,limit,topic!!,userId!!)
+                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"disliked")
                 }
 
                 else -> {
@@ -238,7 +238,7 @@ fun Application.configurePostsRouting() {
 
                 }
             }
-            if (postList.isNotEmpty()) {
+            if (postList != null) {
 
                 call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
