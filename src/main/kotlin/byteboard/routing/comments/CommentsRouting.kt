@@ -21,7 +21,8 @@ fun Application.configureCommentsRouting() {
 
                 val postId: Long? = call.parameters["postid"]?.toLongOrNull()
                 val page: Int = call.parameters["page"]?.toInt() ?: 1
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
                 val order: String = call.parameters["order"] ?: "newest"
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
@@ -36,7 +37,7 @@ fun Application.configureCommentsRouting() {
 
                 val commentList: List<Comment>? = getCommentsByPost(postId!!, limit, page, userId, order)
 
-                if(commentList == null){
+                if (commentList == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
@@ -45,206 +46,211 @@ fun Application.configureCommentsRouting() {
             }
 
 
+
+
+            get("/byteboard/comments/get/user/{uid}") {
+
+                val page: Int = call.parameters["page"]?.toInt() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val uid: Long? = call.parameters["uid"]?.toLongOrNull()
+
+
+                if (uid == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Requires user id"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val commentList: List<Comment>? = getCommentsByUser(uid!!, limit, page, userId)
+
+                if (commentList == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, commentList to commentList))
+
+
+            }
+
+            post("/byteboard/comments/like/{commentId}") {
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val commentId = call.parameters["commentId"]?.toLongOrNull()
+
+                if (commentId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val result = likeComment(userId!!, commentId!!)
+
+                if (!result) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("Response" to "Could not like comment, error occurred")
+                    )
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment liked"))
+
+            }
+
+            post("/byteboard/comments/dislike/{commentId}") {
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val commentId = call.parameters["commentId"]?.toLongOrNull()
+
+                if (commentId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val result = dislikeComment(userId!!, commentId!!)
+
+                if (!result) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("Response" to "Could not dislike comment, error occurred")
+                    )
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment disliked"))
+
+            }
+            post("/byteboard/comments/update/{commentId}") {
+
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val commentId = call.parameters["commentId"]?.toLongOrNull()
+                val update = call.parameters["update"]
+
+                if (update == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Update cannot be null"))
+                }
+
+                if (commentId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val result = updateComment(userId!!, commentId!!, update!!)
+
+                if (!result) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not update comment"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment updated"))
+
+            }
+            post("/byteboard/comments/post") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val content = call.parameters["content"]
+                val isReply: Boolean? = call.parameters["isReply"]?.toBoolean()
+                val parentCommentId: Long? = call.parameters["parentId"]?.toLongOrNull()
+                val postId: Long? = call.parameters["postId"]?.toLongOrNull()
+                val notif: Boolean
+                var parentCommentUser: Long? = null
+                var poster: Long? = null
+
+
+                if (content == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content cannot be null"))
+                }
+
+                if (isReply == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
+                }
+
+
+                if (postId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "postId cannot be null"))
+                }
+
+                if (isReply == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (isUserSuspended(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
+                }
+
+                if (isReply!! && parentCommentId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reply must have a parent"))
+                }
+
+                if (parentCommentId != null) {
+                    parentCommentUser = getCommentOwnerId(parentCommentId)
+                } else {
+                    poster = getPostOwnerId(postId!!)
+                }
+                val result = postComment(content!!, userId, postId!!, isReply, parentCommentId)
+
+                if (result == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not post comment"))
+                }
+
+                notif = if (isReply == true && parentCommentUser != null) {
+
+                    insertCommentNotification(result!!, parentCommentUser)
+
+                } else if ((isReply == false) && (parentCommentUser == null) && (poster != null)) {
+
+                    insertPostNotification(postId, poster)
+
+                } else {
+
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid parameters"))
+                    false
+                }
+
+                if (!notif) {
+                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted but notification failed"))
+                }
+
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted"))
+
+            }
+            post("/byteboard/comments/delete/{commentId}") {
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val commentId: Long? = call.parameters["commentId"]?.toLongOrNull()
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (commentId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Comment id required"))
+                }
+
+                val result = deleteCommentById(commentId!!, userId!!)
+
+                if (!result) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not delete post"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment deleted"))
+            }
+
+
         }
-
-        get("/byteboard/comments/get/user/{uid}") {
-
-            val page: Int = call.parameters["page"]?.toInt() ?: 1
-            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val uid: Long? = call.parameters["uid"]?.toLongOrNull()
-
-
-            if (uid == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Requires user id"))
-            }
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            val commentList: List<Comment>? = getCommentsByUser(uid!!, limit, page, userId)
-
-            if(commentList == null){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf(page to page, limit to limit, commentList to commentList))
-
-
-        }
-
-        post("/byteboard/comments/like/{commentId}"){
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val commentId = call.parameters["commentId"]?.toLongOrNull()
-
-            if (commentId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
-            }
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            val result = likeComment(userId!!,commentId!!)
-
-            if(!result){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not like comment, error occurred"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment liked"))
-
-        }
-
-        post("/byteboard/comments/dislike/{commentId}"){
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val commentId = call.parameters["commentId"]?.toLongOrNull()
-
-            if (commentId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
-            }
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            val result = dislikeComment(userId!!,commentId!!)
-
-            if(!result){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not dislike comment, error occurred"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment disliked"))
-
-        }
-        post("/byteboard/comments/update/{commentId}"){
-
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val commentId = call.parameters["commentId"]?.toLongOrNull()
-            val update = call.parameters["update"]
-
-            if(update == null){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Update cannot be null"))
-            }
-
-            if (commentId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
-            }
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            val result = updateComment(userId!!,commentId!!,update!!)
-
-            if(!result){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not update comment"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment updated"))
-
-        }
-        post("/byteboard/comments/post"){
-
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val content = call.parameters["content"]
-            val isReply : Boolean? = call.parameters["isReply"]?.toBoolean()
-            val parentCommentId : Long? = call.parameters["parentId"]?.toLongOrNull()
-            val postId : Long? = call.parameters["postId"]?.toLongOrNull()
-            val notif : Boolean
-            var parentCommentUser : Long? = null
-            var poster : Long? = null
-
-
-            if(content == null){
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content cannot be null"))
-            }
-
-            if (isReply == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
-            }
-
-
-            if (postId == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "postId cannot be null"))
-            }
-
-            if (isReply == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
-            }
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            if(isUserSuspended(userId!!)){
-                call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
-            }
-
-            if(isReply!! && parentCommentId == null){
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reply must have a parent"))
-            }
-
-            if(parentCommentId != null ){
-              parentCommentUser = getCommentOwnerId(parentCommentId)
-            }else{
-                poster = getPostOwnerId(postId!!)
-            }
-
-            val result = postComment(content!!, getCommentOwnerId(parentCommentId!!)!!,postId!!,isReply,parentCommentId)
-
-            if(result == null){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not post comment"))
-            }
-
-            notif = if (isReply == true && parentCommentUser != null) {
-
-                insertCommentNotification(result!!, parentCommentUser)
-
-            } else if ((isReply == false) && (parentCommentUser == null) && (poster != null)) {
-
-                insertPostNotification(postId, poster)
-
-            } else {
-
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid parameters"))
-                false
-            }
-
-            if(!notif){
-                call.respond(HttpStatusCode.OK,mapOf("Response" to "Comment posted but notification failed"))
-            }
-
-
-            call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted"))
-
-        }
-        post("/byteboard/comments/delete/{commentId}"){
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val commentId : Long?= call.parameters["commentId"]?.toLongOrNull()
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            if(commentId == null){
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Comment id required"))
-            }
-
-            val result = deleteCommentById(commentId!!,userId!!)
-
-            if(!result){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not delete post"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment deleted"))
-        }
-
-
     }
 }
