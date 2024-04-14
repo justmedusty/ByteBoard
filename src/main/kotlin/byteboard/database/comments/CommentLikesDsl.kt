@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 object CommentLikes : Table(name = "CommentLikes") {
     val id: Column<Long> = long("id").autoIncrement()
-    val commentId: Column<Long?> = long("commentId").references(Comments.id).nullable().default(null)
+    val commentId: Column<Long> = long("commentId").references(Comments.id, ReferenceOption.CASCADE)
     val likedById: Column<Long> = long("likedById").references(Users.id)
 
     init {
@@ -30,7 +30,7 @@ fun isCommentDisLikedByUser(commentId: Long, likedById: Long?): Boolean {
     } else {
         try {
             transaction {
-                val alreadyLiked = CommentLikes.select {
+                val alreadyLiked = CommentDislikes.select {
                     (CommentDislikes.commentId eq commentId) and (CommentDislikes.dislikedById eq likedById)
                 }
                 alreadyLiked.count() > 0
@@ -89,16 +89,18 @@ fun isRequesterLikeOwner(userId: Long, commentId: Long): Boolean {
     }
 }
 
-fun unlikeComment(requesterId: Long, commentId: Long, commentLikesId: Long): Boolean {
-    if (isRequesterLikeOwner(requesterId, commentId) || isUserAdmin(requesterId)) {
-        try {
-            return transaction {
-                val success = CommentLikes.deleteWhere { id eq commentLikesId }
+fun unlikeComment(requesterId: Long, commentId: Long): Boolean {
+    return try {
+            transaction {
+                val success = CommentLikes.deleteWhere { (likedById eq requesterId) and (CommentLikes.commentId eq commentId) }
                 success > 0
             }
         } catch (e: Exception) {
             logger.error { e.message }
-            return false
+            false
         }
-    } else return false
 }
+
+
+
+

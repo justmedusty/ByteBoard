@@ -4,14 +4,15 @@ import byteboard.database.useraccount.Users
 import byteboard.database.useraccount.isUserAdmin
 import byteboard.database.useraccount.logger
 import byteboard.database.posts.Posts
+import byteboard.database.useraccount.deleteUser
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object CommentDislikes: Table(name = "CommentDislikes") {
     val id: Column<Long> = long("id").autoIncrement()
-    val postId : Column<Long> = long("post").references(Posts.id, ReferenceOption.CASCADE)
-    val commentId: Column<Long?> = long("commentId").references(Comments.id).nullable().default(null)
+    val commentId: Column<Long> = long("commentId").references(Comments.id,ReferenceOption.CASCADE
+    )
     val dislikedById : Column<Long> = long("dislikedById").references(Users.id)
 
 
@@ -62,9 +63,12 @@ fun getDislikesForComment(commentId: Long): Long {
 }
 
 fun dislikeComment(dislikedById: Long, commentId: Long): Boolean {
+    if (isCommentLikedByUser(commentId, dislikedById)) {
+        unlikeComment(commentId,dislikedById)
+    }
     return try {
         transaction {
-            CommentLikes.insert {
+            CommentDislikes.insert {
                 it[CommentDislikes.commentId] = commentId
                 it[CommentDislikes.dislikedById] = dislikedById
             }
@@ -90,7 +94,6 @@ fun isRequesterDislikeOwner(userId: Long, commentId: Long): Boolean {
 }
 
 fun unDislikeComment(requesterId: Long, commentId: Long): Boolean {
-    if (isRequesterLikeOwner(requesterId, commentId) || isUserAdmin(requesterId)) {
         try {
             return transaction {
                 val success = CommentDislikes.deleteWhere { (dislikedById eq requesterId) and (CommentDislikes.commentId eq commentId) }
@@ -100,7 +103,6 @@ fun unDislikeComment(requesterId: Long, commentId: Long): Boolean {
             logger.error { e.message }
             return false
         }
-    } else return false
 }
 
 

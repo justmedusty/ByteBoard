@@ -17,8 +17,7 @@ object Comments : Table(name = "Comments") {
     val postId: Column<Long> = long("post").references(Posts.id, ReferenceOption.CASCADE)
     val commenterId: Column<Long> = long("commenterId").references(Users.id)
     val isReply: Column<Boolean> = bool("isReply").default(false)
-    val parentCommentId: Column<Long?> =
-        long("parentCommentId").references(id, onDelete = ReferenceOption.CASCADE).nullable().default(null)
+    val parentCommentId: Column<Long?> = long("parentCommentId").references(id, onDelete = ReferenceOption.CASCADE).nullable().default(null)
     val timeStamp: Column<LocalDateTime> = datetime("time_posted").defaultExpression(CurrentDateTime)
 
 
