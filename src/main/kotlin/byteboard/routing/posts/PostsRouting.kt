@@ -155,7 +155,7 @@ fun Application.configurePostsRouting() {
 
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
-                var postList:List<Post>? = emptyList()
+                var postList:List<Post>? = null
 
                 val order = call.parameters["order"] ?: "recent"
 
@@ -181,14 +181,14 @@ fun Application.configurePostsRouting() {
                     }
 
                     else -> {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid order"))
+                        postList = fetchPosts(page,limit,userId,"new")
 
                     }
                 }
 
             if (postList != null) {
 
-                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit,"order" to order, "results" to postList))
 
             } else call.respond(
                 HttpStatusCode.NoContent,
@@ -234,18 +234,17 @@ fun Application.configurePostsRouting() {
                 }
 
                 else -> {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid order"))
-
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid Order"))
                 }
             }
             if (postList != null) {
 
-                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit,"order" to order, "results" to postList))
 
-            } else call.respond(
-                HttpStatusCode.NoContent,
-                mapOf("Response" to "Could not fetch posts, an error may have occurred")
-            )
+            } else {
+                call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred")
+                )
+            }
 
 
 

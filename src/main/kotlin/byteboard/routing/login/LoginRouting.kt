@@ -39,7 +39,7 @@ fun Application.configureLogin() {
                         "https://byteboard.tech",
                         System.getenv("JWT_SECRET"),
                         getUserId(userName),
-                        1600000,
+                        100000600000,
                     ),
                 ))
                 call.respond(mapOf("access_token" to token))
