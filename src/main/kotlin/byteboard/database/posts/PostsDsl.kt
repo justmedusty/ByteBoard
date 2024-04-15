@@ -34,7 +34,7 @@ data class Post(
     val dislikeCount: Long,
     val likedByMe: Boolean,
     val dislikedByMe: Boolean,
-    val lastedEdited: LocalDateTime?
+    val lastedEdited: String?
 )
 
 fun createPost(userId: Long, content: String, topic: String, title: String): Boolean {
@@ -192,7 +192,7 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long, or
                         it[PostDislikes.postId.count()],
                         isPostLikedByMe,
                         isPostDislikedByMe,
-                        lastEdited
+                        lastEdited.toString()
 
                     )
                 }
@@ -235,7 +235,7 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
                         it[PostDislikes.postId.count()],
                         isPostLikedByMe,
                         isPostDislikedByMe,
-                        lastEdited
+                        lastEdited.toString()
 
                     )
                 }
@@ -275,7 +275,7 @@ fun fetchPostsLikedByMe(page: Int, limit: Int, topic: String, userId: Long): Lis
                         it[PostDislikes.postId.count()],
                         likedByMe = true,
                         dislikedByMe = false,
-                        lastedEdited = lastEdited
+                        lastedEdited = lastEdited.toString()
                     )
                 }
         }
@@ -315,7 +315,7 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
                         it[PostDislikes.postId.count()],
                         likedByMe = false,
                         dislikedByMe = true,
-                        lastedEdited = lastEdited
+                        lastedEdited = lastEdited.toString()
                     )
                 }
         }
@@ -407,7 +407,7 @@ fun fetchPosts(page: Int, limit: Int, userId: Long?, order: String?): List<Post>
                     getDislikesForPost(postId),
                     isPostLikedByMe,
                     isPostDislikedByMe,
-                    lastEdited
+                    lastEdited.toString()
                 )
             }
         }
@@ -455,7 +455,7 @@ fun searchPostByTitleOrContents(userId: Long?, queryParam: String, limit: Int, p
                     getDislikesForPost(postId),
                     isLikedByMe,
                     isDislikedByMe,
-                    lastEdited
+                    lastEdited.toString()
                 )
             }
 
