@@ -32,10 +32,10 @@ data class Comment(
     val commenterId: Long,
     val isReply: Boolean,
     val parentCommentId: Long?,
-    val timeStamp: LocalDateTime
+    val timeStamp: String
 ,   val commentLikes : Long,
     val commentDislikes : Long,
-    val lastEdited : LocalDateTime?,
+    val lastEdited : String?,
     val isCommentLikedByMe : Boolean,
     val isCommentDislikedByMe : Boolean
 )
@@ -99,10 +99,10 @@ fun getCommentById(id: Long,userId: Long?): Comment? {
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp],
+                    it[Comments.timeStamp].toString(),
                     commentLikes,
                     commentDislikes,
-                    lastEdited,
+                    lastEdited.toString(),
                     isCommentLiked,
                     isCommentDisliked
                 )
@@ -178,10 +178,10 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, ord
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp],
+                    it[Comments.timeStamp].toString(),
                     commentLikes,
                     commentDislikes,
-                    lastEdited,
+                    lastEdited.toString(),
                     isCommentLiked,
                     isCommentDisliked
                 )
@@ -208,10 +208,10 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Int,requesterId: Long?)
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp],
+                    it[Comments.timeStamp].toString(),
                     commentLikes,
                     commentDislikes,
-                    lastEdited,
+                    lastEdited.toString(),
                     isCommentLiked,
                     isCommentDisliked
                 )
@@ -235,10 +235,10 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
                     it[Comments.commenterId],
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
-                    it[Comments.timeStamp],
+                    it[Comments.timeStamp].toString(),
                     getLikesForComment(it[Comments.id]),
                     getDislikesForComment(it[Comments.id]),
-                    getLastCommentEdit(it[Comments.id]),
+                    getLastCommentEdit(it[Comments.id]).toString(),
                     isCommentLikedByUser(it[Comments.id], requesterId),
                     isCommentLikedByUser(it[Comments.id], requesterId)
                 )
@@ -259,10 +259,10 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
                         it[Comments.commenterId],
                         it[Comments.isReply],
                         it[Comments.parentCommentId],
-                        it[Comments.timeStamp],
+                        it[Comments.timeStamp].toString(),
                         commentLikes,
                         commentDislikes,
-                        lastEdited,
+                        lastEdited.toString(),
                         isCommentLiked,
                         isCommentDisliked
                     )
