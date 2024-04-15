@@ -59,9 +59,19 @@ fun getLikesForComment(commentId: Long): Long {
 
 fun likeComment(likedById: Long, commentId: Long): Boolean {
 
-    if (isCommentDisLikedByUser(commentId, likedById)) {
-        unDislikeComment(likedById, commentId)
+    if (!isCommentDisLikedByUser(commentId, likedById)) return try {
+        transaction {
+            CommentLikes.insert {
+                it[CommentLikes.commentId] = commentId
+                it[CommentLikes.likedById] = likedById
+            }
+            true
+        }
+    } catch (e: Exception) {
+        logger.error { e.message }
+        false
     }
+    if(!unDislikeComment(likedById, commentId)) return false
     return try {
         transaction {
             CommentLikes.insert {
