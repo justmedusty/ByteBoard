@@ -85,7 +85,7 @@ fun Application.configureProfileChanges() {
                 val postParams = call.receiveParameters()
                 val principal = call.principal<JWTPrincipal>()
                 val id = principal?.payload?.subject?.toLongOrNull()
-                val bioContents = postParams["newBio"].toString()
+                val bioContents = postParams["newBio"].orEmpty()
 
                 if (id == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error Occurred"))
@@ -95,11 +95,8 @@ fun Application.configureProfileChanges() {
                 }
                 try {
                     updateBio(userId = id!!, bioContents)
-                } catch (e: Exception) {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        mapOf("Response" to "Error occurred while updating bio")
-                    )
+                }
+                catch (e: Exception) { call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Error occurred while updating bio"))
                 }
 
                 call.respond(HttpStatusCode.OK, mapOf("Response" to "Successfully updated bio"))

@@ -155,7 +155,7 @@ fun Application.configurePostsRouting() {
 
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
 
-                var postList:List<Post>? = null
+                val postList:List<Post>?
 
                 val order = call.parameters["order"] ?: "recent"
 
@@ -165,35 +165,32 @@ fun Application.configurePostsRouting() {
                 }
                 when (order) {
                     "recent" -> {
-                        postList = fetchPosts(page,limit,userId,"new")
+                        postList = fetchPosts(page,limit,userId!!,"new")
                     }
 
                     "old" -> {
-                        postList = fetchPosts(page,limit,userId,"old")
+                        postList = fetchPosts(page,limit,userId!!,"old")
                     }
 
                     "liked" -> {
-                        postList = fetchPosts(page,limit,userId,"liked")
+                        postList = fetchPosts(page,limit,userId!!,"liked")
                     }
 
                     "disliked" -> {
-                        postList = fetchPosts(page,limit,userId,"disliked")
+                        postList = fetchPosts(page,limit,userId!!,"disliked")
                     }
 
                     else -> {
-                        postList = fetchPosts(page,limit,userId,"new")
+                        postList = fetchPosts(page,limit,userId!!,"new")
 
                     }
                 }
 
-            if (postList != null) {
+            if (!postList.isNullOrEmpty()) {
 
-                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit,"order" to order, "results" to postList))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
-            } else call.respond(
-                HttpStatusCode.NoContent,
-                mapOf("Response" to "Could not fetch posts, an error may have occurred")
-            )
+            } else call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
 
 
         }
@@ -238,12 +235,9 @@ fun Application.configurePostsRouting() {
                 }
             }
             if (postList != null) {
-
                 call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit,"order" to order, "results" to postList))
-
             } else {
-                call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred")
-                )
+                call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
             }
 
 
