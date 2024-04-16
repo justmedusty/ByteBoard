@@ -1,11 +1,9 @@
 package byteboard.database.posts
 
-import byteboard.database.comments.Comments
 import byteboard.database.useraccount.Users
 import byteboard.database.useraccount.getUserName
 import byteboard.database.useraccount.isUserAdmin
 import byteboard.database.useraccount.logger
-import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
@@ -342,16 +340,16 @@ fun fetchPosts(page: Int, limit: Int, userId: Long, order: String?): List<Post>?
         return null
     }
 }
-fun fetchPostsLiked(page: Int, limit: Int, userId: Long, liked: Boolean): List<Post>? {
+fun fetchPostsLiked(page: Int, limit: Int, userId: Long): List<Post>? {
     try {
         return transaction {
             val relevantPostIds = PostLikes
                 .slice(PostLikes.postId)
                 .selectAll()
                 .groupBy(PostLikes.postId)
-                .orderBy(PostLikes.postId.count(), SortOrder.DESC)
+                .orderBy( PostLikes.postId.count(), SortOrder.DESC)
                 .limit(limit, offset = ((page - 1) * limit).toLong())
-                .map { it[PostLikes.postId] }
+                .map { it[PostLikes.postId]}
 
             val query = Posts.innerJoin(PostContents, { Posts.id }, { PostContents.postId })
                 .slice(
@@ -363,7 +361,7 @@ fun fetchPostsLiked(page: Int, limit: Int, userId: Long, liked: Boolean): List<P
                     PostContents.content
                 )
                 .select { Posts.id inList relevantPostIds }
-                .orderBy(Posts.timestamp, SortOrder.DESC)
+               .orderBy(Posts.id, SortOrder.DESC)
 
             query.map {
                 val postId = it[Posts.id]
@@ -394,16 +392,16 @@ fun fetchPostsLiked(page: Int, limit: Int, userId: Long, liked: Boolean): List<P
     }
 }
 
-fun fetchPostsDisliked(page: Int, limit: Int, userId: Long, liked: Boolean): List<Post>? {
+fun fetchPostsDisliked(page: Int, limit: Int, userId: Long): List<Post>? {
     try {
         return transaction {
             val relevantPostIds = PostDislikes
-                .slice( PostDislikes.postId)
+                .slice(PostDislikes.postId)
                 .selectAll()
-                .groupBy( PostDislikes.postId)
+                .groupBy(PostDislikes.postId)
                 .orderBy( PostDislikes.postId.count(), SortOrder.DESC)
                 .limit(limit, offset = ((page - 1) * limit).toLong())
-                .map { it[ PostDislikes.postId] }
+                .map { it[PostDislikes.postId] }
 
             val query = Posts.innerJoin(PostContents, { Posts.id }, { PostContents.postId })
                 .slice(

@@ -173,11 +173,11 @@ fun Application.configurePostsRouting() {
                     }
 
                     "liked" -> {
-                        postList = fetchPostsLiked(page,limit,userId!!,true)
+                        postList = fetchPostsLiked(page,limit,userId!!)
                     }
 
                     "disliked" -> {
-                        postList = fetchPostsDisliked(page,limit,userId!!,false)
+                        postList = fetchPostsDisliked(page, limit, userId!!)
                     }
 
                     else -> {
