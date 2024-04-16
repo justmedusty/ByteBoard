@@ -129,14 +129,18 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long, or
                     PostContents.content
                 )
                 .select { Posts.id inList relevantPostIds }
-                .orderBy(Posts.id, sortOrder)
-                .limit(limit, offset = ((page - 1) * limit).toLong())
 
             if (orderByCount != null) {
                 query
-                    .groupBy(Posts.id,PostContents.title,PostContents.content)
+                    .groupBy(Posts.id, PostContents.title, PostContents.content)
                     .orderBy(orderByCount, sortOrder)
+            } else {
+                query
+                    .groupBy(Posts.id, PostContents.title, PostContents.content)
+                    .orderBy(Posts.id, sortOrder)
             }
+
+            query.limit(limit, offset = ((page - 1) * limit).toLong())
 
             query.map {
                 val postId = it[Posts.id]
@@ -288,7 +292,6 @@ fun fetchPostsByDislikedByMe(page: Int, limit: Int, topic: String, userId: Long)
 }
 fun fetchPosts(page: Int, limit: Int, userId: Long, order: String?): List<Post>? {
     try {
-        var orderByCount: Expression<Long>? = null
         var sortOrder: SortOrder = SortOrder.DESC
 
         when (order) {
