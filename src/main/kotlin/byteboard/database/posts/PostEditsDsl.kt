@@ -12,7 +12,6 @@ import java.time.LocalDateTime
 object PostEdits : Table(name = "PostEdits") {
     val id: Column<Long> = long("id").autoIncrement()
     val postId: Column<Long> = long("commentId").references(Posts.id)
-    val posterId: Column<Long> = long("posterId").references(Users.id)
     val lastEdited: Column<LocalDateTime> = datetime("lastEdited")
 
 
@@ -24,7 +23,6 @@ fun insertNewPostEdit(post: Long, poster: Long): Boolean {
         transaction {
             PostEdits.insert {
                 it[postId] = post
-                it[posterId] = poster
                 it[lastEdited] = LocalDateTime.now()
             }
             true

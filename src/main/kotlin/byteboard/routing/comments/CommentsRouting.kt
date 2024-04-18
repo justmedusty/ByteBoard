@@ -199,6 +199,10 @@ fun Application.configureCommentsRouting() {
                         call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content cannot be null"))
                     }
 
+                    if(content!!.length > Length.MAX_COMMENT_LENGTH.value){
+                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content exceeds maximum characters (5000)"))
+                    }
+
                     if (isReply == null) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
                     }
