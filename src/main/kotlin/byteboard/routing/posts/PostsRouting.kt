@@ -267,6 +267,36 @@ fun Application.configurePostsRouting() {
 
         }
 
+            get("/byteboard/posts/interacted/{liked}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+
+                val postList:List<Post>?
+                var liked = call.parameters["liked"]
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if(liked.isNullOrEmpty()){
+                    liked =  "liked"
+                }
+
+                val bool = (liked) == "liked"
+
+                postList = fetchPostsInteractedByMe(page,limit,userId!!,bool)
+
+                if(postList == null){
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred fetching posts"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
+
+            }
+
     }
 }
 }

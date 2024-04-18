@@ -212,28 +212,26 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
     }
 }
 
-fun fetchPostsInteractedByMe(page: Int, limit: Int, topic: String, userId: Long, interactionType: String): List<Post> {
-    val isLiked = interactionType == "like"
-    val interactionColumn = if (isLiked) PostLikes.likedById else PostDislikes.dislikedById
+fun fetchPostsInteractedByMe(page: Int, limit: Int, userId: Long, liked: Boolean): List<Post>?{
+    val column : Column<Long> = if (liked) PostLikes.likedById else PostDislikes.dislikedById
 
     return try {
         transaction {
-            (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
-                Posts.id,
-                Posts.posterId,
-                Posts.topic,
-                Posts.timestamp,
-                PostContents.title,
-                PostContents.content,
-                PostLikes.postId.count(),
-                PostDislikes.postId.count()
-            ).select(interactionColumn eq userId).groupBy(Posts.id).orderBy(Posts.id, SortOrder.DESC)
+            Posts.innerJoin(PostContents, { Posts.id }, { PostContents.postId }).leftJoin(PostDislikes).leftJoin(PostLikes)
+                .slice(
+                    Posts.id,
+                    Posts.posterId,
+                    Posts.topic,
+                    Posts.timestamp,
+                    PostContents.title,
+                    PostContents.content
+                ).select(column eq userId).groupBy(Posts.id,PostContents.title,PostContents.content).orderBy(Posts.id, SortOrder.DESC)
                 .limit(limit, offset = ((page - 1) * limit).toLong()).map {
                     val postId = it[Posts.id]
                     val posterUsername = it[Posts.posterId]
                     val username = getUserName(posterUsername) ?: "Could not get username"
                     val lastEdited = checkLastPostEdit(postId)
-                    val dislikedByMe = !isLiked
+                    val dislikedByMe = !liked
                     Post(
                         postId,
                         username,
@@ -241,9 +239,9 @@ fun fetchPostsInteractedByMe(page: Int, limit: Int, topic: String, userId: Long,
                         it[Posts.timestamp].toString(),
                         it[PostContents.title],
                         it[PostContents.content],
-                        it[PostLikes.postId.count()],
-                        it[PostDislikes.postId.count()],
-                        isLiked,
+                        getLikesForPost(postId),
+                        getDislikesForPost(postId),
+                        liked,
                         dislikedByMe,
                         lastEdited.toString()
                     )
@@ -251,7 +249,7 @@ fun fetchPostsInteractedByMe(page: Int, limit: Int, topic: String, userId: Long,
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        emptyList<Post>()
+        null
     }
 }
 fun fetchPosts(page: Int, limit: Int, userId: Long, order: String?): List<Post>? {
