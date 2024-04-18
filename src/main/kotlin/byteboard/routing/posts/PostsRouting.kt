@@ -31,6 +31,7 @@ fun Application.configurePostsRouting() {
                 }
 
                 val result = deletePost(userId!!, postsId!!)
+
                 if (result) {
                     call.respond(HttpStatusCode.OK, mapOf("Response" to "Successfully Deleted Post"))
                 } else {

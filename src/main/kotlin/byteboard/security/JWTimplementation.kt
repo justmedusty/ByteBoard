@@ -29,7 +29,10 @@ data class JWTConfig(
  * @return
  */
 fun createJWT(jwtConfig: JWTConfig): String {
-    return JWT.create().withAudience(jwtConfig.audience).withIssuer(jwtConfig.domain)
-        .withExpiresAt(Date(System.currentTimeMillis() + jwtConfig.expiresInMS)).withSubject(jwtConfig.id.toString())
+    return JWT.create()
+        .withAudience(jwtConfig.audience)
+        .withIssuer(jwtConfig.domain)
+        .withExpiresAt(Date(System.currentTimeMillis() + jwtConfig.expiresInMS))
+        .withSubject(jwtConfig.id.toString())
         .sign(Algorithm.HMAC256(System.getenv("JWT_SECRET")))
 }

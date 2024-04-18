@@ -15,6 +15,7 @@ data class RateLimitConfig(var lastRequestTime: Long, var requestCount: Int)
 val rateLimitMap = ConcurrentHashMap<String, RateLimitConfig>()
 
 fun Application.configureRateLimiting() {
+
     intercept(Plugins) {
         val ip = call.request.origin.remoteHost
         val currentTime = System.currentTimeMillis()

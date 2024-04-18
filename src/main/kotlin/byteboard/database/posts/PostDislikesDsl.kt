@@ -21,12 +21,6 @@ object PostDislikes: Table(name = "Dislikes") {
 }
 
 
-data class PostDislike(
-    val postId: Long,
-    val dislikedById : Long
-)
-
-
 fun getDislikesForPost(postId: Long): Long {
     return try {
         transaction {

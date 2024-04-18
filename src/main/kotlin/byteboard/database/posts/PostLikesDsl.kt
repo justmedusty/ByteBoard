@@ -18,10 +18,6 @@ object PostLikes : Table(name = "Likes") {
 }
 
 
-data class Like(
-    val postId: Long, val likedBy: Long
-)
-
 fun getLikesForPost(postId: Long): Long {
    return try {
         transaction {

@@ -18,11 +18,6 @@ object CommentEdits : Table(name = "CommentEdits") {
     override val primaryKey = PrimaryKey(id)
 }
 
-data class CommentEdit(
-    val commentId : Long,
-    val posterId : Long,
-    val lastEdited : LocalDateTime
-)
 
 fun insertNewCommentEdit(commentsId: Long,userId: Long): Boolean{
     return try {

@@ -25,12 +25,6 @@ object CommentDislikes: Table(name = "CommentDislikes") {
     override val primaryKey = PrimaryKey(id)
 }
 
-
-data class Dislike(
-    val commentId: Long?,
-    val dislikedById : Long
-)
-
 fun isCommentLikedByUser(commentId: Long,dislikedById: Long?): Boolean{
     return if (dislikedById == null){
         false

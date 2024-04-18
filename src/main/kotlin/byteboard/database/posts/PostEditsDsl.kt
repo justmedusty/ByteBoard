@@ -19,10 +19,6 @@ object PostEdits : Table(name = "PostEdits") {
     override val primaryKey = PrimaryKey(id)
 }
 
-data class PostEdit(
-    val posterId: Long, val lastEdited: LocalDateTime
-)
-
 fun insertNewPostEdit(post: Long, poster: Long): Boolean {
     return try {
         transaction {

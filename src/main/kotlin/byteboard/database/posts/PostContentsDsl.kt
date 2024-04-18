@@ -15,10 +15,6 @@ object PostContents : Table(name = "PostContents") {
     override val primaryKey = PrimaryKey(id)
 }
 
-data class PostContent(
-    val postContent: String, val postId: Long, val title: String
-)
-
 
 fun addPostContents(postContent: String, id: Long, postTitle: String): Boolean {
     return try {

@@ -16,7 +16,11 @@ object MessageNotifications : Table(name = "MessageNotifications") {
     override val primaryKey = PrimaryKey(id)
 }
 
+data class MessagesNotification(
+    val message: Long,
+    val read : Boolean,
 
+)
 fun insertMessageNotification(message: Long, user: Long): Boolean {
     return try {
         transaction {
