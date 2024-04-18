@@ -233,7 +233,6 @@ fun fetchPostsInteractedByMe(page: Int, limit: Int, topic: String, userId: Long,
                     val posterUsername = it[Posts.posterId]
                     val username = getUserName(posterUsername) ?: "Could not get username"
                     val lastEdited = checkLastPostEdit(postId)
-                    val likedByMe = isLiked
                     val dislikedByMe = !isLiked
                     Post(
                         postId,
@@ -244,7 +243,7 @@ fun fetchPostsInteractedByMe(page: Int, limit: Int, topic: String, userId: Long,
                         it[PostContents.content],
                         it[PostLikes.postId.count()],
                         it[PostDislikes.postId.count()],
-                        likedByMe,
+                        isLiked,
                         dislikedByMe,
                         lastEdited.toString()
                     )

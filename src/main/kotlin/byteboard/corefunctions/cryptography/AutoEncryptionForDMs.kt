@@ -1,3 +1,4 @@
+import byteboard.database.useraccount.logger
 import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.util.io.Streams
 import org.pgpainless.PGPainless
@@ -38,6 +39,7 @@ fun encryptMessage(publicKey: String, message: String): ByteArray? {
 
         encryptedMessage.toByteArray()
     }catch (e: Exception){
+        logger.error { e.message }
         null
     }
 
