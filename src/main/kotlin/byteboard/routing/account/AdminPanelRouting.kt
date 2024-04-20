@@ -24,9 +24,15 @@ fun Application.configureAdminPanelRouting() {
                 if (uid == null) {
                     call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID required"))
                 }
+                if(reason.isNullOrEmpty()){
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reason required"))
+                }
 
                 if (!isUserAdmin(userId!!)) {
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+                if(isUserSuspended(uid!!)){
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User already suspended"))
                 }
 
 
@@ -41,7 +47,7 @@ fun Application.configureAdminPanelRouting() {
                 if (!result) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was suspended"))
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "User of uid $uid was suspended"))
             }
 
 
@@ -62,7 +68,14 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
                 }
 
-                val logResult = insertSuspendEntry(userId, false, reason!!, uid!!)
+                if(reason.isNullOrEmpty()){
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reason required"))
+                }
+                if(!isUserSuspended(uid!!)){
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User was not suspended, operation aborted"))
+                }
+
+                val logResult = insertSuspendEntry(userId, false, reason!!, uid)
 
                 if (!logResult) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not insert log"))
@@ -73,7 +86,7 @@ fun Application.configureAdminPanelRouting() {
                 if (!result) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was unsuspended"))
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "User of uid $uid was unsuspended"))
             }
 
 
@@ -110,7 +123,7 @@ fun Application.configureAdminPanelRouting() {
 
 
 
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was given admin"))
+                call.respond(HttpStatusCode.OK , mapOf("Response" to "User of uid $uid was given admin"))
             }
 
             post("/byteboard/admin/takeadmin/{uid}") {
@@ -140,7 +153,7 @@ fun Application.configureAdminPanelRouting() {
                 if (!result) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid is no longer admin"))
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "User of uid $uid is no longer admin"))
             }
 
 
@@ -172,7 +185,7 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "List null"))
                 }
 
-                call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit, "result_list" to list))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "result_list" to list))
             }
 
             get("/byteboard/admin/getadminlogsforadmin/{uid}") {
@@ -210,7 +223,74 @@ fun Application.configureAdminPanelRouting() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit, "result_list" to list))
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "result_list" to list))
+            }
+            get("/byteboard/admin/getsuspendlogs/{order}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val order = call.parameters["order"]
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                var orderStr: String = ""
+                var list: List<SuspendLogEntry>? = null
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                if (order.isNullOrEmpty()) {
+                    orderStr = "newest"
+                }
+
+                //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+
+                list = getSuspendLogEntries(page, limit, userId, orderStr)
+
+                if (list == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "List null"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "result_list" to list))
+            }
+
+            get("/byteboard/admin/getadminlogsforadmin/{uid}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val uid = call.parameters["uid"]?.toLongOrNull()
+
+                val order = call.parameters["order"]
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                var list: List<SuspendLogEntry>? = null
+                var orderStr: String = ""
+
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (order.isNullOrEmpty()) {
+                    orderStr = "newest"
+                }
+                orderStr = order.toString()
+                if (uid == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "uid cannot be null"))
+                }
+
+                //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+
+                list = getSuspendLogEntriesByAdmin(page, limit, userId, orderStr, uid!!)
+
+                if (list == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "result_list" to list))
             }
 
         }
