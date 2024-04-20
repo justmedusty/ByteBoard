@@ -93,6 +93,54 @@ fun Application.configurePostsRouting() {
 
             }
 
+            post("/byteboard/posts/edit") {
+                val params = call.receive<PostReq>()
+                val title = params.title
+                val contents = params.contents
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val postId = call.parameters["postid"]?.toLongOrNull()
+
+                if(postId == null){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Null post id"))
+                }
+                if(contents.isEmpty()){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Contents empty"))
+                }
+                if(title.isEmpty()){
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title empty"))
+                }
+
+                if (contents.length > Length.MAX_CONTENT_LENGTH.value) {
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Content too long"))
+                }
+
+                if (title.length > Length.MAX_TITLE_LENGTH.value) {
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title too long"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+
+                if(isUserSuspended(userId!!)){
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
+                }
+
+                val postCreationSuccess = editPost(postId!!,userId, title, contents)
+
+                if (postCreationSuccess) {
+                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Post updated!"))
+                } else {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("Response" to "An error occurred while publishing post edit")
+                    )
+                }
+
+            }
+
+
             post("/byteboard/posts/like/{postId}") {
                 val params = call.parameters
                 val postsId = params["postId"]?.toLongOrNull()
