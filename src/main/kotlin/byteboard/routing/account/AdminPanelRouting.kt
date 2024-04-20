@@ -19,29 +19,29 @@ fun Application.configureAdminPanelRouting() {
                 val reason = call.parameters["reason"]
 
                 if (userId == null) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
                 if (uid == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Response" to "UID required")
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID required"))
                 }
 
                 if (!isUserAdmin(userId!!)) {
-                    call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
                 }
 
 
                 val logResult = insertSuspendEntry(userId, true, reason!!, uid!!)
 
                 if (!logResult) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not insert log"))
                 }
 
                 val result = suspendUser(uid, userId)
 
                 if (!result) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
-                call.respond(HttpStatusCode.BadRequest, "Response" to "User of uid $uid was suspended")
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was suspended"))
             }
 
 
@@ -52,166 +52,169 @@ fun Application.configureAdminPanelRouting() {
                 val reason = call.parameters["reason"]
 
                 if (userId == null) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
                 if (uid == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Response" to "UID required")
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID required"))
                 }
 
                 if (!isUserAdmin(userId!!)) {
-                    call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
                 }
 
                 val logResult = insertSuspendEntry(userId, false, reason!!, uid!!)
 
                 if (!logResult) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not insert log"))
                 }
 
                 val result = unSuspendUser(uid, userId)
 
                 if (!result) {
-                    call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
-                call.respond(HttpStatusCode.BadRequest, "Response" to "User of uid $uid was unsuspended")
-            }
-        }
-
-        post("/byteboard/admin/giveadmin/{uid}") {
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val uid = call.parameters["uid"]?.toLongOrNull()
-            val reason = call.parameters["reason"]
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
-            }
-            if (uid == null) {
-                call.respond(HttpStatusCode.BadRequest, "Response" to "UID required")
-            }
-            if (reason == null) {
-                call.respond(HttpStatusCode.BadRequest, "Response" to "reason required")
-            }
-
-            if (!isUserAdmin(userId!!)) {
-                call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
-            }
-
-            val logResult = insertAdminLogEntry(uid!!, userId, reason!!, true)
-
-            if (!logResult) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
-            }
-
-            val finalResult = giveAdmin(uid, userId)
-
-            if (!finalResult) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was unsuspended"))
             }
 
 
+            post("/byteboard/admin/giveadmin/{uid}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val uid = call.parameters["uid"]?.toLongOrNull()
+                val reason = call.parameters["reason"]
 
-            call.respond(HttpStatusCode.BadRequest, "Response" to "User of uid $uid was given admin")
-        }
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                if (uid == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID required"))
+                }
+                if (reason == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "reason required"))
+                }
 
-        post("/byteboard/admin/takeadmin/{uid}") {
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val uid = call.parameters["uid"]?.toLongOrNull()
-            val reason = call.parameters["reason"]
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
 
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
-            }
-            if (uid == null) {
-                call.respond(HttpStatusCode.BadRequest, "Response" to "UID required")
-            }
+                val logResult = insertAdminLogEntry(uid!!, userId, reason!!, true)
 
-            if (!isUserAdmin(userId!!)) {
-                call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
-            }
+                if (!logResult) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not insert log"))
+                }
 
-            val logResult = insertAdminLogEntry(uid!!, userId, reason!!, false)
+                val finalResult = giveAdmin(uid, userId)
 
-            if (!logResult) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "Could not insert log")
-            }
-
-            val result = takeAdmin(uid, userId)
-
-            if (!result) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
-            }
-            call.respond(HttpStatusCode.BadRequest, "Response" to "User of uid $uid is no longer admin")
-        }
+                if (!finalResult) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
 
 
 
-        get("/byteboard/admin/getadminlogs/{order}") {
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val order = call.parameters["order"]
-            val page = call.parameters["page"]?.toIntOrNull() ?: 1
-            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
-            var orderStr: String = ""
-            var list : List<AdminLog>? = null
-
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-            if (order.isNullOrEmpty()) {
-               orderStr = "newest"
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid was given admin"))
             }
 
-            //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
-            if (!isUserAdmin(userId!!)) {
-                call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
+            post("/byteboard/admin/takeadmin/{uid}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val uid = call.parameters["uid"]?.toLongOrNull()
+                val reason = call.parameters["reason"]
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                if (uid == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID required"))
+                }
+
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+
+                val logResult = insertAdminLogEntry(uid!!, userId, reason!!, false)
+
+                if (!logResult) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not insert log"))
+                }
+
+                val result = takeAdmin(uid, userId)
+
+                if (!result) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "User of uid $uid is no longer admin"))
             }
 
-            list =  getAdminLogEntries(page,limit,userId!!,orderStr!!)
 
-            if (list == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "List null"))
+
+            get("/byteboard/admin/getadminlogs/{order}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val order = call.parameters["order"]
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                var orderStr: String = ""
+                var list: List<AdminLog>? = null
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                if (order.isNullOrEmpty()) {
+                    orderStr = "newest"
+                }
+
+                //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+
+                list = getAdminLogEntries(page, limit, userId!!, orderStr!!)
+
+                if (list == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "List null"))
+                }
+
+                call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit, "result_list" to list))
             }
 
-            call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit , "result_list" to list))
-        }
+            get("/byteboard/admin/getadminlogsforadmin/{uid}") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val uid = call.parameters["uid"]?.toLongOrNull()
 
-        get("/byteboard/admin/getadminlogsforadmin/{uid}") {
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-            val uid = call.parameters["uid"]?.toLongOrNull()
-
-            val order = call.parameters["order"]
-            val page = call.parameters["page"]?.toIntOrNull() ?: 1
-            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
-             var list : List<AdminLog>? = null
-            var orderStr : String =""
+                val order = call.parameters["order"]
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                var list: List<AdminLog>? = null
+                var orderStr: String = ""
 
 
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, "Response" to "An error occurred")
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (order.isNullOrEmpty()) {
+                    orderStr = "newest"
+                }
+                orderStr = order.toString()
+                if (uid == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "uid cannot be null"))
+                }
+
+                //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
+                if (!isUserAdmin(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "Unauthorized"))
+                }
+
+                list = getAdminLogEntriesByAdmin(page, limit, userId!!, orderStr, uid!!)
+
+                if (list == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit, "result_list" to list))
             }
 
-            if (order.isNullOrEmpty()) {
-                orderStr = "newest"
-            }
-            orderStr = order.toString()
-            if (uid == null) {
-               call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "uid cannot be null"))
-            }
-
-            //There are 2 checks so the one inside the log fetch func is redundant but for now I dont care
-            if (!isUserAdmin(userId!!)) {
-                call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
-            }
-
-            list =  getAdminLogEntriesByAdmin(page,limit,userId!!,orderStr,uid!!)
-
-            if (list == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            call.respond(HttpStatusCode.BadRequest, mapOf("page" to page, "limit" to limit , "result_list" to list))
         }
 
     }
-
 
 }
