@@ -35,9 +35,12 @@ fun Application.configureRateLimiting() {
                     )
                     finish()
                 }
-            }/*
+            }
+
+            /*
             *Apply another rate limit to post creation, comment creation, message send etc
              */
+
         } else if (call.request.uri == "byteboard/posts/create" || call.request.uri == "/byteboard/comments/post" || call.request.uri == "/byteboard/messages/send") {
 
             if (currentTime - rateLimitInfo.lastRequestTime > 1.minutes.inWholeMilliseconds) {
