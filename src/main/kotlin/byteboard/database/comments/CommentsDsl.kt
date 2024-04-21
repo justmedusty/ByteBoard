@@ -317,6 +317,7 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
                     val lastEdited: LocalDateTime? = getLastCommentEdit(it[Comments.id])
                     val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
                     val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
+                    val hasRepliesChild = doesCommentHaveReplies(it[Comments.id])
                     Comment(
                         it[Comments.id],
                         it[Comments.content],
@@ -330,7 +331,7 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
                         lastEdited.toString(),
                         isCommentLiked,
                         isCommentDisliked,
-                        hasReplies
+                        hasRepliesChild
                     )
                 }
 
