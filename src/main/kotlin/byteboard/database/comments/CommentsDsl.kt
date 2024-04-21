@@ -181,11 +181,11 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, ord
 
     when (order) {
         "oldest" -> {
-            sortOrder = SortOrder.DESC
+        sortOrder = SortOrder.ASC
         }
 
         "newest" -> {
-            sortOrder = SortOrder.ASC
+            sortOrder = SortOrder.DESC
         }
 
         "likes" -> {
@@ -227,7 +227,7 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, ord
                 val commentDislikes: Long = getDislikesForComment(it[Comments.id])
                 val lastEdited: LocalDateTime? = getLastCommentEdit(it[Comments.id])
                 val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], userId)
-                val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], userId)
+                val isCommentDisliked: Boolean = isCommentDisLikedByUser(it[Comments.id], userId)
                 val hasReplies = doesCommentHaveReplies(it[Comments.id])
 
                 Comment(

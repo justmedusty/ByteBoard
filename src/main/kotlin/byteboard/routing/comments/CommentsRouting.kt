@@ -76,6 +76,34 @@ fun Application.configureCommentsRouting() {
 
             }
 
+            get("/byteboard/comments/getchildren/{id}") {
+
+                val page: Int = call.parameters["page"]?.toInt() ?: 1
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val parent: Long? = call.parameters["id"]?.toLongOrNull()
+
+
+                if (parent == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Requires parent id"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val commentList: List<Comment>? = getChildComments(parent!!, limit, page, userId)
+
+                if (commentList == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "comment_list" to commentList))
+
+
+            }
+
             post("/byteboard/comments/like/{commentId}") {
 
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
@@ -121,7 +149,7 @@ fun Application.configureCommentsRouting() {
 
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val commentId = call.parameters["commentId"]?.toLongOrNull()
-                var result = false
+                val result: Boolean
 
                 if (commentId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null"))
