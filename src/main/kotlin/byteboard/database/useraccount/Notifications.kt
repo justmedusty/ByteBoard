@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object Notifications : Table(name = "Notifications") {
     val id: Column<Long> = long("id").autoIncrement()
     val read: Column<Boolean> = bool("read").default(false)
-    val eventId: Column<Long> = long("id").references(Posts.id, onDelete = ReferenceOption.CASCADE)
+    val eventId: Column<Long> = long("event_id").references(Posts.id, onDelete = ReferenceOption.CASCADE)
     val userId: Column<Long> = long("user_id").references(Users.id, onDelete = ReferenceOption.CASCADE)
     val type: Column<Long> = long("type")
 
@@ -45,15 +45,14 @@ fun insertNotification(id: Long, user: Long, notifType: Long): Boolean {
 
 fun getAllNotifications(page: Long, limit: Long, userId: Long): List<Notification>? {
     return try {
-        val offset = ((page - 1) * limit)
         transaction {
-            Notifications.select(Notifications.userId eq userId).limit(limit.toInt(),offset = offset).map {
+            Notifications.select(Notifications.userId eq userId).limit(limit.toInt(), (page - 1) * limit.toLong()).map {
                 Notification(
                     it[Notifications.id],
-                    it[read],
-                    it[eventId],
+                    it[Notifications.read],
+                    it[Notifications.eventId],
                     userId,
-                    it[type]
+                    it[Notifications.type]
                 )
             }
 

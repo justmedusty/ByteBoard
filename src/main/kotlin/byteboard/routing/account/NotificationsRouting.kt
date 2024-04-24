@@ -29,7 +29,7 @@ fun Application.configureNotificationsRouting(){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                val result : List<Notification>? = getAllNotifications(limit,page,userId!!)
+                val result : List<Notification>? = getAllNotifications(page,limit,userId!!)
 
                 if(result == null){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not get result list"))

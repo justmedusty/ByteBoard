@@ -1,6 +1,6 @@
 package byteboard.database.useraccount
 
-import byteboard.database.posts.PostNotifications
+import Messages
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
@@ -18,9 +18,10 @@ object MessageNotifications : Table(name = "MessageNotifications") {
 
 data class MessagesNotification(
     val message: Long,
-    val read : Boolean,
+    val read: Boolean,
 
-)
+    )
+
 fun insertMessageNotification(message: Long, user: Long): Boolean {
     return try {
         transaction {
