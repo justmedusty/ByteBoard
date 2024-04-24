@@ -1,6 +1,7 @@
 package byteboard.configuration
 
 import Messages
+import Notifications
 import byteboard.database.admin.AdminLogs
 import byteboard.database.admin.SuspendLog
 import byteboard.database.comments.*
@@ -32,7 +33,7 @@ fun Application.configureDatabase() {
         SchemaUtils.create(
             Users,
             Comments,
-            CommentNotifications
+            Notifications
             ,CommentEdits
             ,CommentLikes
             ,CommentDislikes
@@ -40,7 +41,6 @@ fun Application.configureDatabase() {
             ,Posts,
             PostLikes,
             PostDislikes,
-            PostNotifications,
             PostContents,
             PostEdits,
             AdminLogs,

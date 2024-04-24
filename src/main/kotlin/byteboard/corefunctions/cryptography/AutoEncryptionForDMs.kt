@@ -21,7 +21,7 @@ fun encryptMessage(publicKey: String, message: String): ByteArray? {
     return try {
         val outputStream = ByteArrayOutputStream()
 
-        val publicKeyObj: PGPPublicKeyRing = PGPainless.readKeyRing().publicKeyRing(publicKey)!!
+        val publicKeyObj: PGPPublicKeyRing = PGPainless.readKeyRing().publicKeyRing(publicKey) ?: return null
         val plaintextInputStream = ByteArrayInputStream(message.toByteArray())
 
         val encryptionStream: EncryptionStream = PGPainless.encryptAndOrSign().onOutputStream(outputStream).withOptions(

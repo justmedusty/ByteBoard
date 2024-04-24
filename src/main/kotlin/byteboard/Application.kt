@@ -1,6 +1,7 @@
 package byteboard
 
 import byteboard.configuration.*
+import byteboard.routing.account.configureNotificationsRouting
 import byteboard.routing.comments.configureCommentsRouting
 import byteboard.routing.account.configureProfileChanges
 import byteboard.routing.account.configureUserProfileRouting
@@ -33,4 +34,5 @@ fun Application.module() {
     configureAdminPanelRouting()
     configureMessageRoutes()
     configureUserProfileRouting()
+    configureNotificationsRouting()
 }

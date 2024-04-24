@@ -19,10 +19,14 @@ object Notifications : Table(name = "Notifications") {
 }
 
 data class Notification(
-    val id: Long, val read: Boolean, val eventId: Long, val user: Long, val type: Long
+    val id: Long,
+    val read: Boolean,
+    val eventId: Long,
+    val user: Long,
+    val type: Long
 )
 
-fun insertPostNotification(id: Long, user: Long, notifType: Long): Boolean {
+fun insertNotification(id: Long, user: Long, notifType: Long): Boolean {
     return try {
         transaction {
             Notifications.insert {
@@ -60,11 +64,11 @@ fun getAllNotifications(page: Long, limit: Long, userId: Long): List<Notificatio
     }
 }
 
-fun markNotifRead(notif: Long): Boolean {
+fun markNotifRead(notif: Long,user: Long): Boolean {
 
     return try {
         transaction {
-            Notifications.update({ Notifications.id eq notif }) {
+            Notifications.update({ (Notifications.id eq notif) and (Notifications.userId eq user) }) {
                 it[read] = true
             }
             true
@@ -75,11 +79,11 @@ fun markNotifRead(notif: Long): Boolean {
     }
 }
 
-fun markNotifUnread(notif: Long): Boolean {
+fun markNotifUnread(notif: Long,user: Long): Boolean {
 
     return try {
         transaction {
-            Notifications.update({ Notifications.id eq notif }) {
+            Notifications.update({ (Notifications.id eq notif) and (Notifications.userId eq user) }) {
                 it[read] = false
             }
             true

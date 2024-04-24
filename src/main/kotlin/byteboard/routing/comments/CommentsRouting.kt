@@ -3,9 +3,10 @@ package byteboard.routing.comments
 
 import byteboard.database.comments.*
 import byteboard.database.posts.getPostOwnerId
-import byteboard.database.posts.insertPostNotification
 import byteboard.database.useraccount.isUserSuspended
 import byteboard.enums.Length
+import byteboard.enums.Notif
+import insertNotification
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -160,7 +161,7 @@ fun Application.configureCommentsRouting() {
                 }
 
                 if (isCommentDisLikedByUser(commentId!!, userId)) {
-                     result = unDislikeComment(userId!!, commentId)
+                    result = unDislikeComment(userId!!, commentId)
 
                     if (result) {
                         call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment undisliked"))
@@ -180,115 +181,118 @@ fun Application.configureCommentsRouting() {
 
             }
 
-                post("/byteboard/comments/update/{commentId}") {
+            post("/byteboard/comments/update/{commentId}") {
 
 
-                    val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-                    val commentId = call.parameters["commentId"]?.toLongOrNull()
-                    val update = call.parameters["update"]
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val commentId = call.parameters["commentId"]?.toLongOrNull()
+                val update = call.parameters["update"]
 
-                    if (update == null) {
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Update cannot be null"))
-                    }
-
-                    if (commentId == null) {
-                        call.respond(
-                            HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null")
-                        )
-                    }
-
-                    if (userId == null) {
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-                    }
-
-                    val result = updateComment(userId!!, commentId!!, update!!)
-
-                    if (!result) {
-                        call.respond(
-                            HttpStatusCode.InternalServerError, mapOf("Response" to "Could not update comment")
-                        )
-                    }
-
-                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment updated"))
-
+                if (update == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Update cannot be null"))
                 }
-                post("/byteboard/comments/post") {
-                    val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-                    val content = call.parameters["content"]
-                    val isReply: Boolean? = call.parameters["isReply"]?.toBoolean()
-                    val parentCommentId: Long? = call.parameters["parentId"]?.toLongOrNull()
-                    val postId: Long? = call.parameters["postId"]?.toLongOrNull()
-                    val notif: Boolean
-                    var parentCommentUser: Long? = null
-                    var poster: Long? = null
 
-
-                    if (content == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content cannot be null"))
-                    }
-
-                    if(content!!.length > Length.MAX_COMMENT_LENGTH.value){
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content exceeds maximum characters (5000)"))
-                    }
-
-                    if (isReply == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
-                    }
-
-
-                    if (postId == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "postId cannot be null"))
-                    }
-
-                    if (isReply == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
-                    }
-
-                    if (userId == null) {
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-                    }
-
-                    if (isUserSuspended(userId!!)) {
-                        call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
-                    }
-
-                    if (isReply!! && parentCommentId == null) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reply must have a parent"))
-                    }
-
-                    if (parentCommentId != null) {
-                        parentCommentUser = getCommentOwnerId(parentCommentId)
-                    } else {
-                        poster = getPostOwnerId(postId!!)
-                    }
-                    val result = postComment(content!!, userId, postId!!, isReply, parentCommentId)
-
-                    if (result == null) {
-                        call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not post comment"))
-                    }
-
-                    notif = if (isReply == true && parentCommentUser != null) {
-
-                        insertCommentNotification(result!!, parentCommentUser)
-
-                    } else if ((isReply == false) && (parentCommentUser == null) && (poster != null)) {
-
-                        insertPostNotification(postId, poster)
-
-                    } else {
-
-                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid parameters"))
-                        false
-                    }
-
-                    if (!notif) {
-                        call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted but notification failed"))
-                    }
-
-
-                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted"))
-
+                if (commentId == null) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError, mapOf("Response" to "Comment ID cannot be null")
+                    )
                 }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                val result = updateComment(userId!!, commentId!!, update!!)
+
+                if (!result) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError, mapOf("Response" to "Could not update comment")
+                    )
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment updated"))
+
+            }
+            post("/byteboard/comments/post") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+                val content = call.parameters["content"]
+                val isReply: Boolean? = call.parameters["isReply"]?.toBoolean()
+                val parentCommentId: Long? = call.parameters["parentId"]?.toLongOrNull()
+                val postId: Long? = call.parameters["postId"]?.toLongOrNull()
+                val notif: Boolean
+                var parentCommentUser: Long? = null
+                var poster: Long? = null
+
+
+                if (content == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "content cannot be null"))
+                }
+
+                if (content!!.length > Length.MAX_COMMENT_LENGTH.value) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("Response" to "content exceeds maximum characters (5000)")
+                    )
+                }
+
+                if (isReply == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
+                }
+
+
+                if (postId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "postId cannot be null"))
+                }
+
+                if (isReply == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "isReply cannot be null"))
+                }
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+
+                if (isUserSuspended(userId!!)) {
+                    call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
+                }
+
+                if (isReply!! && parentCommentId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Reply must have a parent"))
+                }
+
+                if (parentCommentId != null) {
+                    parentCommentUser = getCommentOwnerId(parentCommentId)
+                } else {
+                    poster = getPostOwnerId(postId!!)
+                }
+                val result = postComment(content, userId, postId!!, isReply, parentCommentId)
+
+                if (result == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "Could not post comment"))
+                }
+
+                notif = if (isReply == true && parentCommentUser != null) {
+
+                    insertNotification(result!!, parentCommentUser, Notif.COMMENT.value)
+
+                } else if ((isReply == false) && (parentCommentUser == null) && (poster != null)) {
+
+                    insertNotification(postId, poster, Notif.POST.value)
+
+                } else {
+
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid parameters"))
+                    false
+                }
+
+                if (!notif) {
+                    call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted but notification failed"))
+                }
+
+
+                call.respond(HttpStatusCode.OK, mapOf("Response" to "Comment posted"))
+
+            }
 
             post("/byteboard/comments/delete/{commentId}") {
 
