@@ -163,7 +163,7 @@ fun fetchPostsByTopic(postTopic: String, page: Int, limit: Int, userId: Long, or
     }
 }
 
-fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
+fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post>? {
     return try {
         transaction {
             (Posts innerJoin PostLikes innerJoin PostDislikes innerJoin PostContents leftJoin PostEdits).slice(
@@ -201,7 +201,7 @@ fun fetchPostsFromUser(page: Int, limit: Int, userId: Long): List<Post> {
         }
     } catch (e: Exception) {
         logger.error { e.message }
-        emptyList<Post>()
+        null
     }
 }
 

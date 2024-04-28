@@ -28,6 +28,7 @@ fun sendMessage(sender: Long, receiver: Long, messageString: String): Long? {
 
     val publicKey: String?
     var encryptedMessage: ByteArray? = null
+
     if (hasAutoEncryptionEnabled(receiver)) {
         publicKey = getPublicKey(receiver)
         if (publicKey != null) {

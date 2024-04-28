@@ -163,7 +163,7 @@ fun Application.configureAdminPanelRouting() {
                 val order = call.parameters["order"]
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 var orderStr: String = ""
                 var list: List<AdminLog>? = null
 
@@ -195,7 +195,7 @@ fun Application.configureAdminPanelRouting() {
                 val order = call.parameters["order"]
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 var list: List<AdminLog>? = null
                 var orderStr: String = ""
 
@@ -230,7 +230,7 @@ fun Application.configureAdminPanelRouting() {
                 val order = call.parameters["order"]
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 var orderStr: String = ""
                 var list: List<SuspendLogEntry>? = null
 
@@ -262,7 +262,7 @@ fun Application.configureAdminPanelRouting() {
                 val order = call.parameters["order"]
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 var list: List<SuspendLogEntry>? = null
                 var orderStr: String = ""
 

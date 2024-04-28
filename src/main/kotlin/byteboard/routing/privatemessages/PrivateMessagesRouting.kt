@@ -73,7 +73,7 @@ fun Application.configureMessageRoutes() {
             get("/byteboard/messages/fetchAll") {
                 val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
 
 
                 if (userId == null) {
@@ -91,7 +91,7 @@ fun Application.configureMessageRoutes() {
             get("/byteboard/messages/fetchByUser") {
                 val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 val senderUsername = call.parameters["sender"]
 
                 if(senderUsername.isNullOrEmpty()){
@@ -113,7 +113,7 @@ fun Application.configureMessageRoutes() {
             get("/byteboard/messages/getAllSenders") {
                 val userId = call.principal<JWTPrincipal>()?.payload?.subject?.toLongOrNull()
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
 
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))

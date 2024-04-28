@@ -14,9 +14,7 @@ import io.ktor.server.routing.*
 fun Application.configurePostsRouting() {
 
     data class PostReq(
-        val title : String,
-        val contents:String,
-        val topic: String
+        val title: String, val contents: String, val topic: String
     )
     routing {
         authenticate("jwt") {
@@ -47,13 +45,13 @@ fun Application.configurePostsRouting() {
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
 
-                if(topic.isEmpty()){
+                if (topic.isEmpty()) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Topic empty"))
                 }
-                if(contents.isEmpty()){
+                if (contents.isEmpty()) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Contents empty"))
                 }
-                if(title.isEmpty()){
+                if (title.isEmpty()) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title empty"))
                 }
 
@@ -76,7 +74,7 @@ fun Application.configurePostsRouting() {
                 }
 
 
-                if(isUserSuspended(userId!!)){
+                if (isUserSuspended(userId!!)) {
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
                 }
 
@@ -100,13 +98,13 @@ fun Application.configurePostsRouting() {
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val postId = call.parameters["postid"]?.toLongOrNull()
 
-                if(postId == null){
+                if (postId == null) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Null post id"))
                 }
-                if(contents.isEmpty()){
+                if (contents.isEmpty()) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Contents empty"))
                 }
-                if(title.isEmpty()){
+                if (title.isEmpty()) {
                     call.respond(HttpStatusCode.NotAcceptable, mapOf("Response" to "Title empty"))
                 }
 
@@ -123,11 +121,11 @@ fun Application.configurePostsRouting() {
                 }
 
 
-                if(isUserSuspended(userId!!)){
+                if (isUserSuspended(userId!!)) {
                     call.respond(HttpStatusCode.Unauthorized, mapOf("Response" to "User suspended"))
                 }
 
-                val postCreationSuccess = editPost(postId!!,userId, title, contents)
+                val postCreationSuccess = editPost(postId!!, userId, title, contents)
 
                 if (postCreationSuccess) {
                     call.respond(HttpStatusCode.OK, mapOf("Response" to "Post updated!"))
@@ -202,9 +200,10 @@ fun Application.configurePostsRouting() {
 
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
 
-                val postList:List<Post>?
+                val postList: List<Post>?
 
                 val order = call.parameters["order"] ?: "recent"
 
@@ -214,138 +213,184 @@ fun Application.configurePostsRouting() {
                 }
                 when (order) {
                     "recent" -> {
-                        postList = fetchPosts(page,limit,userId!!,"new")
+                        postList = fetchPosts(page, limit, userId!!, "new")
                     }
 
                     "old" -> {
-                        postList = fetchPosts(page,limit,userId!!,"old")
+                        postList = fetchPosts(page, limit, userId!!, "old")
                     }
 
                     "liked" -> {
-                        postList =  fetchPosts(page,limit,userId!!,"liked")
+                        postList = fetchPosts(page, limit, userId!!, "liked")
                     }
 
                     "disliked" -> {
-                        postList =  fetchPosts(page,limit,userId!!,"disliked")
+                        postList = fetchPosts(page, limit, userId!!, "disliked")
                     }
 
                     else -> {
-                        postList = fetchPosts(page,limit,userId!!,"new")
+                        postList = fetchPosts(page, limit, userId!!, "new")
 
                     }
                 }
 
-            if (!postList.isNullOrEmpty()) {
+                if (!postList.isNullOrEmpty()) {
+
+                    call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
+
+                } else call.respond(
+                    HttpStatusCode.NoContent,
+                    mapOf("Response" to "Could not fetch posts, an error may have occurred")
+                )
+
+
+            }
+
+            get("/byteboard/postsfromuser/{id}") {
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
+
+                val postList: List<Post>?
+
+                val id = call.parameters["id"]?.toLongOrNull()
+
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "An ID is required!"))
+                }
+
+                postList = fetchPostsFromUser(page, limit, id!!)
+
+                if (postList.isNullOrEmpty()) {
+
+                    call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
+
+                }
 
                 call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
-            } else call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
 
-
-        }
-        get("/byteboard/posts/topic/{order}") {
-
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-
-            val page = call.parameters["page"]?.toIntOrNull() ?: 1
-
-            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
-
-            var postList:List<Post>? = null
-            val topic = call.parameters["topic"]
-            val order = call.parameters["order"]
-
-            if (topic.isNullOrEmpty()) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Topic is required"))
             }
-            //TODO decide how to handle non logged in users , will decide later. This can stay for now
-            if (userId == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-            when (order) {
-                "recent" -> {
-                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"new")
+            get("/byteboard/posts/topic/{order}") {
+
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
+
+                var postList: List<Post>? = null
+                val topic = call.parameters["topic"]
+                val order = call.parameters["order"]
+
+                if (topic.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Topic is required"))
+                }
+                //TODO decide how to handle non logged in users , will decide later. This can stay for now
+                if (userId == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
+                }
+                when (order) {
+                    "recent" -> {
+                        postList = fetchPostsByTopic(topic!!, page, limit, userId!!, "new")
+                    }
+
+                    "old" -> {
+                        postList = fetchPostsByTopic(topic!!, page, limit, userId!!, "old")
+                    }
+
+                    "liked" -> {
+                        postList = fetchPostsByTopic(topic!!, page, limit, userId!!, "liked")
+                    }
+
+                    "disliked" -> {
+                        postList = fetchPostsByTopic(topic!!, page, limit, userId!!, "disliked")
+                    }
+
+                    else -> {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid Order"))
+                    }
+                }
+                if (postList != null) {
+                    call.respond(
+                        HttpStatusCode.OK,
+                        mapOf("page" to page, "limit" to limit, "order" to order, "results" to postList)
+                    )
+                } else {
+                    call.respond(
+                        HttpStatusCode.NoContent,
+                        mapOf("Response" to "Could not fetch posts, an error may have occurred")
+                    )
                 }
 
-                "old" -> {
-                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"old")
+
+            }
+            get("/byteboard/posts/search") {
+                val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
+
+                val page = call.parameters["page"]?.toIntOrNull() ?: 1
+
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
+
+                val postList: List<Post>?
+                val query = call.parameters["query"]
+
+                if (query.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Query cannot be empty"))
                 }
 
-                "liked" -> {
-                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"liked")
+                postList = searchPostByTitleOrContents(userId, query!!, limit, page)
+
+                if (postList == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                "disliked" -> {
-                    postList = fetchPostsByTopic(topic!!,page,limit,userId!!,"disliked")
-                }
+                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
-                else -> {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Invalid Order"))
-                }
             }
-            if (postList != null) {
-                call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit,"order" to order, "results" to postList))
-            } else {
-                call.respond(HttpStatusCode.NoContent, mapOf("Response" to "Could not fetch posts, an error may have occurred"))
-            }
-
-
-
-        }
-        get("/byteboard/posts/search") {
-            val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-
-            val page = call.parameters["page"]?.toIntOrNull() ?: 1
-
-            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
-
-            val postList:List<Post>?
-            val query = call.parameters["query"]
-
-            if(query.isNullOrEmpty()){
-                call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "Query cannot be empty"))
-            }
-
-            postList = searchPostByTitleOrContents(userId,query!!,limit,page)
-
-            if(postList == null){
-                call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
-            }
-
-            call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
-
-        }
 
             get("/byteboard/posts/interacted/{liked}") {
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
                 val page = call.parameters["page"]?.toIntOrNull() ?: 1
 
-                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 25).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
+                    ?: 25).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
 
-                val postList:List<Post>?
+                val postList: List<Post>?
                 var liked = call.parameters["liked"]
 
                 if (userId == null) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
-                if(liked.isNullOrEmpty()){
-                    liked =  "liked"
+                if (liked.isNullOrEmpty()) {
+                    liked = "liked"
                 }
 
                 val bool = (liked) == "liked"
 
-                postList = fetchPostsInteractedByMe(page,limit,userId!!,bool)
+                postList = fetchPostsInteractedByMe(page, limit, userId!!, bool)
 
-                if(postList == null){
-                    call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred fetching posts"))
+                if (postList == null) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("Response" to "An error occurred fetching posts")
+                    )
                 }
 
                 call.respond(HttpStatusCode.OK, mapOf("page" to page, "limit" to limit, "results" to postList))
 
             }
 
+        }
     }
-}
 }

@@ -23,7 +23,7 @@ fun Application.configureCommentsRouting() {
                 val postId: Long? = call.parameters["postid"]?.toLongOrNull()
                 val page: Int = call.parameters["page"]?.toInt() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 50).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 val order: String = call.parameters["order"] ?: "newest"
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
 
@@ -53,7 +53,7 @@ fun Application.configureCommentsRouting() {
 
                 val page: Int = call.parameters["page"]?.toInt() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 50).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val uid: Long? = call.parameters["uid"]?.toLongOrNull()
 
@@ -81,7 +81,7 @@ fun Application.configureCommentsRouting() {
 
                 val page: Int = call.parameters["page"]?.toInt() ?: 1
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull()
-                    ?: 50).coerceAtMost(Length.MAX_LIMIT.value.toInt())
+                    ?: 50).coerceAtMost(Length.MAX_PAGE_LIMIT.value.toInt())
                 val userId = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
                 val parent: Long? = call.parameters["id"]?.toLongOrNull()
 
