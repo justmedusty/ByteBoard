@@ -2,6 +2,7 @@ package byteboard.database.comments
 
 import byteboard.database.posts.Posts
 import byteboard.database.useraccount.Users
+import byteboard.database.useraccount.getUserName
 import byteboard.database.useraccount.isUserAdmin
 import byteboard.database.useraccount.logger
 import org.jetbrains.exposed.sql.*
@@ -30,6 +31,7 @@ data class Comment(
     val content: String,
     val postId: Long,
     val commenterId: Long,
+    val commenterUsername : String,
     val isReply: Boolean,
     val parentCommentId: Long?,
     val timeStamp: String,
@@ -150,12 +152,15 @@ fun getCommentById(id: Long, userId: Long?): Comment? {
             val isCommentDisliked: Boolean = isCommentLikedByUser(id, userId)
             val hasReplies = doesCommentHaveReplies(id)
 
+
             Comments.select { Comments.id eq id }.singleOrNull()?.let {
+                val username : String = getUserName(it[Comments.commenterId]) ?: "Couldn't load"
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],
+                     username,
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
                     it[Comments.timeStamp].toString(),
@@ -229,12 +234,14 @@ fun getCommentsByPost(postId: Long, pageSize: Int, page: Int, userId: Long?, ord
                 val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], userId)
                 val isCommentDisliked: Boolean = isCommentDisLikedByUser(it[Comments.id], userId)
                 val hasReplies = doesCommentHaveReplies(it[Comments.id])
+                val username : String = getUserName(it[Comments.commenterId]) ?: "Couldn't load"
 
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],
+                    username,
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
                     it[Comments.timeStamp].toString(),
@@ -264,11 +271,13 @@ fun getCommentsByUser(userId: Long, pageSize: Int, page: Int, requesterId: Long?
                     val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
                     val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
                     val hasReplies = doesCommentHaveReplies(it[Comments.id])
+                    val username : String = getUserName(it[Comments.commenterId]) ?: "Couldn't load"
                     Comment(
                         it[Comments.id],
                         it[Comments.content],
                         it[Comments.postId],
                         it[Comments.commenterId],
+                        username,
                         it[Comments.isReply],
                         it[Comments.parentCommentId],
                         it[Comments.timeStamp].toString(),
@@ -293,11 +302,13 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
             val parentComment = Comments.select { Comments.id eq commentId }.singleOrNull()
             val hasReplies = doesCommentHaveReplies(commentId)
             val parentCommentData = parentComment?.let {
+                val username : String = getUserName(it[Comments.commenterId]) ?: "Couldn't load"
                 Comment(
                     it[Comments.id],
                     it[Comments.content],
                     it[Comments.postId],
                     it[Comments.commenterId],
+                    username,
                     it[Comments.isReply],
                     it[Comments.parentCommentId],
                     it[Comments.timeStamp].toString(),
@@ -318,11 +329,13 @@ fun getChildComments(commentId: Long, pageSize: Int, page: Int, requesterId: Lon
                     val isCommentLiked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
                     val isCommentDisliked: Boolean = isCommentLikedByUser(it[Comments.id], requesterId)
                     val hasRepliesChild = doesCommentHaveReplies(it[Comments.id])
+                    val username : String = getUserName(it[Comments.commenterId]) ?: "Couldn't load"
                     Comment(
                         it[Comments.id],
                         it[Comments.content],
                         it[Comments.postId],
                         it[Comments.commenterId],
+                        username,
                         it[Comments.isReply],
                         it[Comments.parentCommentId],
                         it[Comments.timeStamp].toString(),

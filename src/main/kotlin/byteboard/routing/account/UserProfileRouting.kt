@@ -16,15 +16,14 @@ fun Application.configureUserProfileRouting(){
             get("/byteboard/profiles/get/{id}"){
 
                 val userId : Long? = call.principal<JWTPrincipal>()?.subject?.toLongOrNull()
-                val uuid = call.parameters["id"]?.toLongOrNull()
+                var uuid = call.parameters["id"]?.toLongOrNull()
 
                 if(userId == null){
                     call.respond(HttpStatusCode.InternalServerError, mapOf("Response" to "An error occurred"))
                 }
 
                 if(uuid == null){
-                    call.respond(HttpStatusCode.BadRequest, mapOf("Response" to "UID cannot be null"))
-
+                    uuid = userId
                 }
 
                 val result = getProfileDataEntry(uuid!!)
